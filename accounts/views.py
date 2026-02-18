@@ -1,31 +1,38 @@
 from rest_framework.response import Response
 from .models import User
 from rest_framework.views import APIView
-from .serializers import RegisterSerializer, LoginSerializer , EmailTokenObtainPairSerializer
+from .serializers import RegisterSerializer, EmailTokenObtainPairSerializer
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class RegisterView(APIView):
+    permission_classes=[AllowAny]
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message":"User successfully registered."}, status=status.HTTP_201_CREATED)
-        return Response(status = status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(APIView):
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data["email"]
-            password = serializer.validated_data["password"]
-            user = authenticate(request, username=email, password=password)
-            if user is None:
-                return Response({"message":"Invalid credentials"}, status= status.HTTP_401_UNAUTHORIZED)
-            return Response({"message":"Authenticated successfully"}, status=status.HTTP_200_OK)
-        return Response({"message":"Error"}, status=status.HTTP_400_BAD_REQUEST)
     
 class EmailTokenObtainPairView(TokenObtainPairView):
+    permission_classes=[AllowAny]
     serializer_class = EmailTokenObtainPairSerializer
+
+
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]  
+
+    def post(self, request):
+        try:
+            refresh = request.data["refresh"]
+            token = RefreshToken(refresh)
+            token.blacklist()
+            return Response({"message": "Logged out"}, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({"error": "Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
