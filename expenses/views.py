@@ -3,11 +3,12 @@ from rest_framework import viewsets
 from .models import Expense
 from .serializers import ExpenseSerializer
 from rest_framework.permissions import IsAuthenticated
+from .permissions import IsOwner
 
 # Create your views here.
 class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
 
     # only logged in user expenses 
     def get_queryset(self):
