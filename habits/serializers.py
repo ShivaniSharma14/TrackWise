@@ -15,6 +15,6 @@ class HabitLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at','updated_at']
     def validate_habit(self, value):
         request = self.context.get('request')
-        if value.user != self.user:
-            raise serializers.ValidationError("You can only log youtr own habits.")
+        if not request or value.user != request.user:
+            raise serializers.ValidationError("You can only log your own habits.")
         return value
