@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from .serializers import HabitSerializer, HabitLogSerializer
 from rest_framework import response
-from .services import streaks, stats
+from .services import streaks, stats, dashboard
 
 # Create your views here.
 class HabitViewSet(viewsets.ModelViewSet):
@@ -65,3 +65,9 @@ class HabitStatsAPIView(APIView):
            
         }
         )
+    
+class DashboardSummaryAPIView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request):
+        data = dashboard.get_dashboard_summary(request.user)
+        return Response(data)

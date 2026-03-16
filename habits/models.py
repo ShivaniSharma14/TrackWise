@@ -2,11 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models import UniqueConstraint
 
-# Create your models here.
-
-
 class Habit(models.Model):
-
     FREQUENCY_CHOICES = [
         ("DAILY", "Daily"),
         ("WEEKLY", "Weekly")
@@ -16,7 +12,6 @@ class Habit(models.Model):
         ("COUNT","Count"),
         ("BOOL","Yes/No")
     ]
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -37,7 +32,8 @@ class Habit(models.Model):
 
 class HabitLog(models.Model):
     habit = models.ForeignKey(
-        Habit, on_delete=models.CASCADE, related_name="logs")
+        Habit, on_delete=models.CASCADE,
+        related_name="logs")
     date = models.DateField()
     value = models.PositiveIntegerField(default=0)
     note = models.TextField(blank=True)
