@@ -7,6 +7,9 @@ from .permissions import IsOwner
 from .filters import ExpenseFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
+from rest_framework.views import APIView
+from expenses.services.expense_stats import get_expense_dashboard_stats
+from rest_framework.response import Response
 
 # Create your views here.
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -24,4 +27,11 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     # ownership enforcement 
     def perform_create(self, serializer):
         serializer.save(user = self.request.user)
+
+class ExpenseDashboardStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        data = get_expense_dashboard_stats(request.user)
+        return Response(data)
+
     

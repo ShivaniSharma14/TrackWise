@@ -6,7 +6,6 @@ from expenses.permissions import IsOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from .serializers import HabitSerializer, HabitLogSerializer
-from rest_framework import response
 from .services import streaks, stats, dashboard
 
 # Create your views here.
