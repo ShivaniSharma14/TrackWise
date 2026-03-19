@@ -9,32 +9,32 @@ from django.db.models.functions import Coalesce, TruncMonth
 def get_user_expenses(user):
     return Expense.objects.filter(user=user)
 
-def get_this_month_range(user):
+def get_this_month_range():
     today = timezone.localdate()
     start = today.replace(day=1)
     return start, today
     
-def get_last_month_range(user):
+def get_last_month_range():
     today = timezone.localdate()
     this_month_start = today.replace(day=1)
     last_month_end = this_month_start - timedelta(days=1)
     last_month_start = last_month_end.replace(day=1)
-    return get_last_month_range, last_month_end
+    return last_month_start, last_month_end
 
 def get_spent_in_range(queryset, start_date, end_date):
     total = queryset.filter(
         date__gte=start_date,
         date__lte=end_date
     ).aggregate(
-        total = Coalesce(Sum("amount"),Decimal("0.0"))["total"]
-    )
+        total = Coalesce(Sum("amount"),Decimal("0.0"))
+    )["total"]
     return total
 
 def get_category_breakdown(queryset, start_date, end_date):
     data = (
         queryset.filter(date__gte=start_date, date__lte=end_date)
         .values("category")
-        .annotate(total = Coalesce(sum("amount"), Decimal("0.0")))
+        .annotate(total = Coalesce(Sum("amount"), Decimal("0.0")))
         .order_by("-total")
     )
 
@@ -104,7 +104,7 @@ def get_month_change(this_month_spent, last_month_spent):
             "percentage_change":None
         }
     diff = this_month_spent - last_month_spent
-    percentage_change = (diff/this_month_spent)*100
+    percentage_change = (diff/last_month_spent)*100
     return{
         "amount_difference":diff,
         "percentage_change":round(percentage_change,2)
