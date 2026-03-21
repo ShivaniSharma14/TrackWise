@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.views import APIView
 from expenses.services.expense_stats import get_expense_dashboard_stats
+from expenses.services.expense_analytics import get_expense_analytics
 from rest_framework.response import Response
 
 # Create your views here.
@@ -35,3 +36,8 @@ class ExpenseDashboardStatsView(APIView):
         return Response(data)
 
     
+class ExpenseAnalyticsView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request):
+        data = get_expense_analytics(reuest.user)
+        return Response(data)

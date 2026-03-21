@@ -26,7 +26,7 @@ def get_spent_in_range(queryset, start_date, end_date):
         date__gte=start_date,
         date__lte=end_date
     ).aggregate(
-        total = Coalesce(Sum("amount"),Decimal("0.0"))
+        total = Coalesce(Sum("amount"),Decimal("0.00"))
     )["total"]
     return total
 
