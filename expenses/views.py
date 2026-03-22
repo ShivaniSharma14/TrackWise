@@ -39,5 +39,5 @@ class ExpenseDashboardStatsView(APIView):
 class ExpenseAnalyticsView(APIView):
     permission_classes=[IsAuthenticated]
     def get(self,request):
-        data = get_expense_analytics(reuest.user)
+        data = get_expense_analytics(request.user)
         return Response(data)
