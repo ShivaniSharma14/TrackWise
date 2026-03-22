@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 from django.db.models import Sum, Count, Avg
-from django.db.models.functions import Coalesce, TruncMonth
+from django.db.models.functions import Coalesce, TruncMonth, Round
 from django.utils import timezone
 
 from expenses.services.expense_stats import (
@@ -98,7 +98,7 @@ def get_summary_metrics(queryset, start_date, end_date):
 
     return filtered.aggregate(
         total_expenses_count=Count("id"),
-        average_expense_amount=Coalesce(Avg("amount"), Decimal("0.00")),
+        average_expense_amount=Round(Coalesce(Avg("amount"), Decimal("0.00")),2),
         total_spent=Coalesce(Sum("amount"), Decimal("0.00")),
     )
 

@@ -16,10 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from config.dashboard import CombinedDashboardView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/expenses/', include('expenses.urls')),
     path('api/habits/', include('habits.urls')),
+    path('api/dashboard/summary/', CombinedDashboardView.as_view(), name='combined-dashboard')
 ]
