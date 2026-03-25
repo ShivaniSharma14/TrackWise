@@ -60,52 +60,103 @@ class AccountsAPITests(APITestCase):
         response = self.client.post("/api/accounts/login/",data, format="json")
         self.assertEqual(response.status_code,status.HTTP_401_UNAUTHORIZED)
         
-    # def test_logout_success(self):
-    #     User.objects.create_user(
-    #         email="test@example.com",
-    #         password="test98765"
-    #     )
-    #     login_response = self.client.post(
-    #         "/api/accounts/login/",
-    #         {"email": "shivani@example.com", "password": "strongpassword123"},
-    #         format="json"
-    #     )
-    #     access = login_response.data["access"]
-    #     refresh = login_response.data["refresh"]
+    def test_logout_success(self):
+        User.objects.create_user(
+            email="test@example.com",
+            password="test98765"
+        )
+        login_response = self.client.post(
+            "/api/accounts/login/",
+            {"email": "test@example.com", "password": "test98765"},
+            format="json"
+        )
+        access = login_response.data["access"]
+        refresh = login_response.data["refresh"]
 
-    #     self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
 
-    #     response = self.client.post(
-    #         "/api/accounts/logout/",
-    #         {"refresh": refresh},
-    #         format="json"
-    #     )
-    #     self.assertEqual(response.status_code,status.HTTP_200_OK)
+        response = self.client.post(
+            "/api/accounts/logout/",
+            {"refresh": refresh},
+            format="json"
+        )
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
 
-    # def test_logout_without_refresh_fails(self):
-    #     User.objects.create_user(
-    #         email="shivani@example.com",
-    #         password="strongpassword123"
-    #     )
 
-    #     login_response = self.client.post(
-    #         "/api/accounts/login/",
-    #         {"email": "shivani@example.com", "password": "strongpassword123"},
-    #         format="json"
-    #     )
 
-    #     access = login_response.data["access"]
-    #     self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+    def test_logout_without_refresh_fails(self):
+        User.objects.create_user(
+            email="shivani@example.com",
+            password="strongpassword123"
+        )
 
-    #     response = self.client.post("/api/accounts/logout/", {}, format="json")
+        login_response = self.client.post(
+            "/api/accounts/login/",
+            {"email": "shivani@example.com", "password": "strongpassword123"},
+            format="json"
+        )
 
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        access = login_response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
 
-    # def test_logout_without_auth(self):
-    #     response = self.client.post(
-    #         "/api/accounts/logout/",
-    #         {"refresh": "sometoken"},
-    #         format="json"
-    #     )
+        response = self.client.post("/api/accounts/logout/", {}, format="json")
 
-    #     self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logout_without_auth(self):
+        response = self.client.post(
+            "/api/accounts/logout/",
+            {"refresh": "sometoken"},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_blacklisted_token_connot_refreshed(self):
+        User.objects.create_user(
+            email="shivani@example.com",
+            password="strongpassword123"
+        )
+        login_response = self.client.post("/api/accounts/login/",{"email": "shivani@example.com", "password": "strongpassword123"},format="json")
+        access = login_response.data["access"]
+        refresh = login_response.data["refresh"]
+        self.client.credentials(HTTP_AUTHORIZATION= f"Bearer {access}")
+        self.client.post("/api/accounts/logout/",{"refresh":refresh}, format="json")
+        response=self.client.post("/api/accounts/refresh/",{"refresh":refresh},format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED )
+
+    def test_login_nonexistent_user_fails(self):
+        login_response = self.client.post("/api/accounts/login/",{"email": "shivani@example.com", "password": "strongpassword123"},format="json")
+        self.assertEqual(login_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+
+    def test_invalid_access_token_rejected(self):
+        User.objects.create_user(
+            email="shivani@example.com",
+            password="strongpassword123"
+        )
+        self.client.post("/api/accounts/login/",{"email": "shivani@example.com", "password": "strongpassword123"},format="json")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer ")
+        response=self.client.get("/api/habits/",format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED )
+
+
+    def test_missing_auth_header_rejected(self):
+        User.objects.create_user(
+            email="shivani@example.com",
+            password="strongpassword123"
+        )
+        self.client.post("/api/accounts/login/",{"email": "shivani@example.com", "password": "strongpassword123"},format="json")
+        
+        response=self.client.get("/api/habits/",format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED )
+ 
+ 
+    def test_register_does_not_return_passowrd(self):
+
+        response = self.client.post("/api/accounts/register/",{"email":"test@example.com",
+        "password":"test98765",
+        "first_name":"dummy",
+        "last_name":"user"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotIn("password",response.data)
