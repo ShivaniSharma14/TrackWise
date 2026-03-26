@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Expense
 from .serializers import ExpenseSerializer
@@ -12,7 +11,7 @@ from expenses.services.expense_stats import get_expense_dashboard_stats
 from expenses.services.expense_analytics import get_expense_analytics
 from rest_framework.response import Response
 
-# Create your views here.
+
 class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated, IsOwner]
