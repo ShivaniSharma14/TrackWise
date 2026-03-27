@@ -52,7 +52,7 @@ def get_average_monthly_spend(monthly_history):
     non_zero_months = [
         item["total"]
         for item in monthly_history
-        if item["total"] > 0
+        if item["total"] >= 0
     ]
 
     if not non_zero_months:

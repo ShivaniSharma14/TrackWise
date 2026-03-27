@@ -34,7 +34,7 @@ def get_category_breakdown(queryset, start_date, end_date):
     data = (
         queryset.filter(date__gte=start_date, date__lte=end_date)
         .values("category")
-        .annotate(total = Coalesce(Sum("amount"), Decimal("0.0")))
+        .annotate(total = Coalesce(Sum("amount"), Decimal("0.00")))
         .order_by("-total")
     )
 
@@ -124,11 +124,11 @@ def get_expense_dashboard_stats(user):
     return {
         "this_month_spent": this_month_spent,
         "last_month_spent": last_month_spent,
-        "month_change": month_change,
+        "month_change": month_change, # % inc or dec in spending
         "top_category_this_month": top_category,
-        "category_breakdown_this_month": category_breakdown,
+        "category_breakdown_this_month": category_breakdown, # category eith total spent
         "last_7_days_spending": last_7_days,
-        "monthly_spending_history": monthly_history,
+        "monthly_spending_history": monthly_history, # last 6 months
     }
 
 
