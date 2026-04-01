@@ -22,4 +22,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             password = password, **validated_data
         )
         return user
+    
+
 
