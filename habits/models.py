@@ -2,15 +2,15 @@ from django.db import models
 from django.conf import settings
 from django.db.models import UniqueConstraint
 
+
 class Habit(models.Model):
     FREQUENCY_CHOICES = [
         ("DAILY", "Daily"),
-        ("WEEKLY", "Weekly")
     ]
     TARGET_UNIT_CHOICES = [
-        ("MINUTES","Minutes"),
-        ("COUNT","Count"),
-        ("BOOL","Yes/No")
+        ("MINUTES", "Minutes"),
+        ("COUNT", "Count"),
+        ("BOOL", "Yes/No")
     ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -18,9 +18,11 @@ class Habit(models.Model):
         related_name="habits"
     )
     name = models.CharField(max_length=100)
-    frequency = models.CharField(max_length=15,choices=FREQUENCY_CHOICES, default="DAILY")
+    frequency = models.CharField(
+        max_length=15, choices=FREQUENCY_CHOICES, default="DAILY")
     target_value = models.PositiveIntegerField()
-    target_unit = models.CharField(max_length=15,choices=TARGET_UNIT_CHOICES, default="COUNT")
+    target_unit = models.CharField(
+        max_length=15, choices=TARGET_UNIT_CHOICES, default="COUNT")
     start_date = models.DateField()
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,9 +43,9 @@ class HabitLog(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        constraints =[
+        constraints = [
             UniqueConstraint(
-                fields=['habit','date'],
+                fields=['habit', 'date'],
                 name="unique_habit_log_per_day"
             )
         ]

@@ -113,7 +113,7 @@ def get_habit_stats(habit):
         **get_longest_streak(habit),
         **get_completion_rate(habit),
         **get_last_7_days_status(habit),
-    } 
+    }  
     
 
 

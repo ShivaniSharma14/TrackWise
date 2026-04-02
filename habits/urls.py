@@ -10,6 +10,6 @@ router.register(r'', HabitViewSet, basename = 'habit')
 urlpatterns = [
     path('', include(router.urls)),
     path('<int:id>/streak/',HabitStreakAPIView.as_view(), name = 'habit-streak'),
-    path('<int:id>/stats/',HabitStatsAPIView.as_view(), name = 'habit-streak'),
+    path('<int:id>/stats/',HabitStatsAPIView.as_view(), name = 'habit-stats'),
     path('dashboard/summary/',DashboardSummaryAPIView.as_view(), name = 'dashboard-summary')
 ]    

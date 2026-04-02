@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Habit, HabitLog
 import datetime
+from django.utils import timezone
 
 class HabitSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,7 +40,7 @@ class HabitLogSerializer(serializers.ModelSerializer):
     
 
     def validate_date(self, date):
-        if date>datetime.date.today():
+        if date>timezone.localdate():
             raise serializers.ValidationError("Future logs are not allowed.")
         return date
     

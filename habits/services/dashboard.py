@@ -18,7 +18,7 @@ def build_logs_map(habits):
     for habit in habits:
         logs_map[habit.id] = {
             log.date: log for log in habit.logs.all()
-        }
+        } 
 
     return logs_map
 
