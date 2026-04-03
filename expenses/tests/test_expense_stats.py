@@ -16,17 +16,20 @@ from expenses.services.expense_stats import (
     get_month_change,
     get_expense_dashboard_stats,
     get_this_month_range,
-    get_last_month_range
+    get_last_month_range,
 )
 
 User = get_user_model()
 
 
 class ExpenseStatsTest(TestCase):
-
     def setUp(self):
-        self.user = User.objects.create_user(email="test@example.com", password="pass@123")
-        self.other_user = User.objects.create_user(email="other@example.com", password="pass@123")
+        self.user = User.objects.create_user(
+            email="test@example.com", password="pass@123"
+        )
+        self.other_user = User.objects.create_user(
+            email="other@example.com", password="pass@123"
+        )
         self.today = timezone.localdate()
         self.queryset = get_user_expenses(self.user)
 
@@ -36,10 +39,8 @@ class ExpenseStatsTest(TestCase):
             date=date,
             category=category,
             note="test",
-            user=user or self.user
+            user=user or self.user,
         )
-
-
 
     def test_get_user_expenses_returns_only_own(self):
         self._create_expense(100, self.today)
@@ -50,7 +51,6 @@ class ExpenseStatsTest(TestCase):
     def test_get_user_expenses_empty(self):
         qs = get_user_expenses(self.user)
         self.assertEqual(qs.count(), 0)
-
 
     def test_spent_in_range_correct_total(self):
         self._create_expense(500, self.today)
@@ -95,7 +95,6 @@ class ExpenseStatsTest(TestCase):
         result = get_top_category(self.queryset, self.today, self.today)
         self.assertIsNone(result)
 
-
     def test_last_7_days_returns_7_entries(self):
         result = get_last_7_days_spending(self.queryset)
         self.assertEqual(len(result), 7)
@@ -103,7 +102,9 @@ class ExpenseStatsTest(TestCase):
     def test_last_7_days_correct_spending(self):
         self._create_expense(400, self.today)
         result = get_last_7_days_spending(self.queryset)
-        today_entry = next(r for r in result if r["date"] == self.today) # next() picks the first object where condition match
+        today_entry = next(
+            r for r in result if r["date"] == self.today
+        )  # next() picks the first object where condition match
         self.assertEqual(today_entry["spending"], Decimal("400.00"))
 
     def test_last_7_days_missing_days_are_zero(self):
@@ -111,11 +112,10 @@ class ExpenseStatsTest(TestCase):
         for entry in result:
             self.assertEqual(entry["spending"], Decimal("0.00"))
 
-
     def test_monthly_history_returns_correct_months(self):
         self._create_expense(1000, self.today)
         result = get_monthly_spending_history(self.queryset, months=6)
-        self.assertEqual(len(result), 1)####
+        self.assertEqual(len(result), 1)  ####
 
     def test_monthly_history_format(self):
         self._create_expense(1000, self.today)
@@ -125,8 +125,6 @@ class ExpenseStatsTest(TestCase):
     def test_monthly_history_empty(self):
         result = get_monthly_spending_history(self.queryset, months=6)
         self.assertEqual(result, [])
-
-
 
     def test_month_change_with_last_month_data(self):
         result = get_month_change(Decimal("1500"), Decimal("1000"))
@@ -142,7 +140,6 @@ class ExpenseStatsTest(TestCase):
         result = get_month_change(Decimal("500"), Decimal("1000"))
         self.assertEqual(result["amount_difference"], Decimal("-500"))
         self.assertEqual(result["percentage_change"], -50.0)
-
 
     def test_dashboard_stats_keys(self):
         result = get_expense_dashboard_stats(self.user)
@@ -164,7 +161,9 @@ class ExpenseStatsTest(TestCase):
         result = get_expense_dashboard_stats(self.user)
         self.assertEqual(result["this_month_spent"], Decimal("1000.00"))
 
-    @patch("expenses.services.expense_stats.timezone.localdate")# patch relace the today with mockdate we set
+    @patch(
+        "expenses.services.expense_stats.timezone.localdate"
+    )  # patch relace the today with mockdate we set
     def test_get_this_month_range(self, mock_localdate):
         mock_localdate.return_value = date(2026, 3, 26)
 
@@ -175,9 +174,9 @@ class ExpenseStatsTest(TestCase):
 
     @patch("expenses.services.expense_stats.timezone.localdate")
     def test_get_last_month_range(self, mock_localdate):
-       mock_localdate.return_value = date(2026, 3, 26)
+        mock_localdate.return_value = date(2026, 3, 26)
 
-       start, end = get_last_month_range()
+        start, end = get_last_month_range()
 
-       self.assertEqual(start, date(2026, 2, 1))
-       self.assertEqual(end, date(2026, 2, 28))
+        self.assertEqual(start, date(2026, 2, 1))
+        self.assertEqual(end, date(2026, 2, 28))

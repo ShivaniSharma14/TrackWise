@@ -9,11 +9,13 @@ from django.db.models.functions import Coalesce, TruncMonth
 def get_user_expenses(user):
     return Expense.objects.filter(user=user)
 
+
 def get_this_month_range():
     today = timezone.localdate()
     start = today.replace(day=1)
     return start, today
-    
+
+
 def get_last_month_range():
     today = timezone.localdate()
     this_month_start = today.replace(day=1)
@@ -21,30 +23,24 @@ def get_last_month_range():
     last_month_start = last_month_end.replace(day=1)
     return last_month_start, last_month_end
 
+
 def get_spent_in_range(queryset, start_date, end_date):
-    total = queryset.filter(
-        date__gte=start_date,
-        date__lte=end_date
-    ).aggregate(
-        total = Coalesce(Sum("amount"),Decimal("0.00"))
+    total = queryset.filter(date__gte=start_date, date__lte=end_date).aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0.00"))
     )["total"]
     return total
+
 
 def get_category_breakdown(queryset, start_date, end_date):
     data = (
         queryset.filter(date__gte=start_date, date__lte=end_date)
         .values("category")
-        .annotate(total = Coalesce(Sum("amount"), Decimal("0.00")))
+        .annotate(total=Coalesce(Sum("amount"), Decimal("0.00")))
         .order_by("-total")
     )
 
-    return [
-        {
-            "category":item["category"],
-            "total":item["total"] 
-        }
-        for item in data
-    ]
+    return [{"category": item["category"], "total": item["total"]} for item in data]
+
 
 def get_top_category(queryset, start_date, end_date):
     categories = get_category_breakdown(queryset, start_date, end_date)
@@ -52,34 +48,35 @@ def get_top_category(queryset, start_date, end_date):
         return None
     else:
         return categories[0]
-    
+
+
 def get_last_7_days_spending(queryset):
     today = timezone.localdate()
     start = today - timedelta(days=6)
 
-    raw = (queryset.filter(date__gte=start, date__lte=today)
-           .values("date")
-           .annotate(total=Coalesce(Sum("amount"), Decimal("0.00")))
-           .order_by("date")
-           )
-    
-    spending_map = {
-        item["date"] : item["total"]
-        for item in raw
-    }
+    raw = (
+        queryset.filter(date__gte=start, date__lte=today)
+        .values("date")
+        .annotate(total=Coalesce(Sum("amount"), Decimal("0.00")))
+        .order_by("date")
+    )
+
+    spending_map = {item["date"]: item["total"] for item in raw}
     result = []
     current = start
-    while current<=today:
-        result.append({
-                "date":current,
-                "spending":spending_map.get(current , Decimal("0.00"))
-            })
+    while current <= today:
+        result.append(
+            {"date": current, "spending": spending_map.get(current, Decimal("0.00"))}
+        )
         current = current + timedelta(days=1)
     return result
-        
+
+
 def get_monthly_spending_history(queryset, months=6):
     today = timezone.localdate()
-    approx_start = (today.replace(day=1) - timedelta(days=32 * (months - 1))).replace(day=1)
+    approx_start = (today.replace(day=1) - timedelta(days=32 * (months - 1))).replace(
+        day=1
+    )
 
     raw = (
         queryset.filter(date__gte=approx_start, date__lte=today)
@@ -90,25 +87,18 @@ def get_monthly_spending_history(queryset, months=6):
     )
 
     return [
-        {
-            "month": item["month"].strftime("%Y-%m"),
-            "total": item["total"]
-        }
+        {"month": item["month"].strftime("%Y-%m"), "total": item["total"]}
         for item in raw
     ]
 
+
 def get_month_change(this_month_spent, last_month_spent):
-    if last_month_spent==0:
-        return{
-            "amount_difference":this_month_spent,
-            "percentage_change":None
-        }
+    if last_month_spent == 0:
+        return {"amount_difference": this_month_spent, "percentage_change": None}
     diff = this_month_spent - last_month_spent
-    percentage_change = (diff/last_month_spent)*100
-    return{
-        "amount_difference":diff,
-        "percentage_change":round(percentage_change,2)
-    }
+    percentage_change = (diff / last_month_spent) * 100
+    return {"amount_difference": diff, "percentage_change": round(percentage_change, 2)}
+
 
 def get_expense_dashboard_stats(user):
     queryset = get_user_expenses(user)
@@ -124,12 +114,9 @@ def get_expense_dashboard_stats(user):
     return {
         "this_month_spent": this_month_spent,
         "last_month_spent": last_month_spent,
-        "month_change": month_change, # % inc or dec in spending
+        "month_change": month_change,  # % inc or dec in spending
         "top_category_this_month": top_category,
-        "category_breakdown_this_month": category_breakdown, # category eith total spent
+        "category_breakdown_this_month": category_breakdown,  # category eith total spent
         "last_7_days_spending": last_7_days,
-        "monthly_spending_history": monthly_history, # last 6 months
+        "monthly_spending_history": monthly_history,  # last 6 months
     }
-
-
-    

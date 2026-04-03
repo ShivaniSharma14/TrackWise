@@ -20,23 +20,28 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     ordering_fields = ["date", "amount", "created_at"]
     ordering = ["-date", "-created_at"]
 
-    # only logged in user expenses 
+    # only logged in user expenses
     def get_queryset(self):
-        return Expense.objects.filter(user = self.request.user).order_by('-date','-created_at')
-    
-    # ownership enforcement 
+        return Expense.objects.filter(user=self.request.user).order_by(
+            "-date", "-created_at"
+        )
+
+    # ownership enforcement
     def perform_create(self, serializer):
-        serializer.save(user = self.request.user)
+        serializer.save(user=self.request.user)
+
 
 class ExpenseDashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self,request):
+
+    def get(self, request):
         data = get_expense_dashboard_stats(request.user)
         return Response(data)
 
-    
+
 class ExpenseAnalyticsView(APIView):
-    permission_classes=[IsAuthenticated]
-    def get(self,request):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         data = get_expense_analytics(request.user)
         return Response(data)

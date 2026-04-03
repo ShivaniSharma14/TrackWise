@@ -5,9 +5,7 @@ from habits.models import Habit
 
 def get_active_daily_habits(user):
     habits = Habit.objects.filter(
-        user=user,
-        is_active=True,
-        frequency="DAILY"
+        user=user, is_active=True, frequency="DAILY"
     ).prefetch_related("logs")
     return habits
 
@@ -16,9 +14,7 @@ def build_logs_map(habits):
     logs_map = {}
 
     for habit in habits:
-        logs_map[habit.id] = {
-            log.date: log for log in habit.logs.all()
-        } 
+        logs_map[habit.id] = {log.date: log for log in habit.logs.all()}
 
     return logs_map
 
@@ -58,7 +54,7 @@ def get_day_summary(habits, day, logs_map):
         "completed_habits": completed_habits,
         "pending_habits": pending_habits,
         "completion_rate": completion_rate,
-        "is_perfect_day": is_perfect_day
+        "is_perfect_day": is_perfect_day,
     }
 
 
@@ -183,9 +179,7 @@ def empty_dashboard_response():
             "perfect_days_count": 0,
             "incomplete_days_count": 0,
         },
-        "trend": {
-            "last_7_days": []
-        }
+        "trend": {"last_7_days": []},
     }
 
 
@@ -221,7 +215,5 @@ def get_dashboard_summary(user):
             "perfect_days_count": performance["perfect_days_count"],
             "incomplete_days_count": performance["incomplete_days_count"],
         },
-        "trend": {
-            "last_7_days": last_7_days
-        }
+        "trend": {"last_7_days": last_7_days},
     }
