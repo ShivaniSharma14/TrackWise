@@ -33,10 +33,7 @@ def get_monthly_spending_history(queryset, months=12):
         .annotate(total=Coalesce(Sum("amount"), Decimal("0.00")))
         .order_by("month")
     )
-    spending_map = {
-        item["month"]: item["total"]
-        for item in raw
-    }
+    spending_map = {item["month"]: item["total"] for item in raw}
     history = []
     for month_start in month_starts:
         history.append(
@@ -49,11 +46,7 @@ def get_monthly_spending_history(queryset, months=12):
 
 
 def get_average_monthly_spend(monthly_history):
-    non_zero_months = [
-        item["total"]
-        for item in monthly_history
-        if item["total"] > 0
-    ]
+    non_zero_months = [item["total"] for item in monthly_history if item["total"] > 0]
 
     if not non_zero_months:
         return Decimal("0.00")
@@ -65,9 +58,9 @@ def get_average_monthly_spend(monthly_history):
 def get_category_breakdown_with_percentage(queryset, start_date, end_date):
     filtered = queryset.filter(date__gte=start_date, date__lte=end_date)
 
-    total_spent = filtered.aggregate(
-        total=Coalesce(Sum("amount"), Decimal("0.00"))
-    )["total"]
+    total_spent = filtered.aggregate(total=Coalesce(Sum("amount"), Decimal("0.00")))[
+        "total"
+    ]
 
     data = (
         filtered.values("category")
@@ -98,7 +91,7 @@ def get_summary_metrics(queryset, start_date, end_date):
 
     return filtered.aggregate(
         total_expenses_count=Count("id"),
-        average_expense_amount=Round(Coalesce(Avg("amount"), Decimal("0.00")),2),
+        average_expense_amount=Round(Coalesce(Avg("amount"), Decimal("0.00")), 2),
         total_spent=Coalesce(Sum("amount"), Decimal("0.00")),
     )
 

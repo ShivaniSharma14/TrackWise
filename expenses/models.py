@@ -3,19 +3,16 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MinValueValidator
 
+
 # Create your models here.
 class Expense(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE, 
-        related_name="expenses"
-     )
-    amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal(0.01))]
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="expenses"
     )
-    date = models.DateField() 
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal(0.01))]
+    )
+    date = models.DateField()
     category = models.CharField(max_length=50)
     note = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -24,8 +21,8 @@ class Expense(models.Model):
     class Meta:
         ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["user","date"]),
-            models.Index(fields=["user","category"])
+            models.Index(fields=["user", "date"]),
+            models.Index(fields=["user", "category"]),
         ]
 
     def __str__(self):

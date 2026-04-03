@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -15,39 +14,83 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Habit',
+            name="Habit",
             fields=[
-                ('id', models.BigAutoField(auto_created=True,
-                 primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('frequency', models.CharField(choices=[
-                 ('DAILY', 'Daily')], default='DAILY', max_length=15)),
-                ('target_value', models.PositiveIntegerField()),
-                ('target_unit', models.CharField(choices=[('MINUTES', 'Minutes'), (
-                    'COUNT', 'Count'), ('BOOL', 'Yes/No')], default='COUNT', max_length=15)),
-                ('start_date', models.DateField()),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                 related_name='habits', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                (
+                    "frequency",
+                    models.CharField(
+                        choices=[("DAILY", "Daily")], default="DAILY", max_length=15
+                    ),
+                ),
+                ("target_value", models.PositiveIntegerField()),
+                (
+                    "target_unit",
+                    models.CharField(
+                        choices=[
+                            ("MINUTES", "Minutes"),
+                            ("COUNT", "Count"),
+                            ("BOOL", "Yes/No"),
+                        ],
+                        default="COUNT",
+                        max_length=15,
+                    ),
+                ),
+                ("start_date", models.DateField()),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="habits",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='HabitLog',
+            name="HabitLog",
             fields=[
-                ('id', models.BigAutoField(auto_created=True,
-                 primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField()),
-                ('value', models.PositiveIntegerField(default=0)),
-                ('note', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('habit', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, related_name='logs', to='habits.habit')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField()),
+                ("value", models.PositiveIntegerField(default=0)),
+                ("note", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "habit",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="logs",
+                        to="habits.habit",
+                    ),
+                ),
             ],
             options={
-                'constraints': [models.UniqueConstraint(fields=('habit', 'date'), name='unique_habit_log_per_day')],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("habit", "date"), name="unique_habit_log_per_day"
+                    )
+                ],
             },
         ),
     ]

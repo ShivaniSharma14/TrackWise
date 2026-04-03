@@ -5,27 +5,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('expenses', '0001_initial'),
+        ("expenses", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='Expenses',
-            new_name='Expense',
+            old_name="Expenses",
+            new_name="Expense",
         ),
         migrations.AlterModelOptions(
-            name='expense',
-            options={'ordering': ['-date', '-created_at']},
+            name="expense",
+            options={"ordering": ["-date", "-created_at"]},
         ),
         migrations.AddIndex(
-            model_name='expense',
-            index=models.Index(fields=['user', 'date'], name='expenses_ex_user_id_713a9d_idx'),
+            model_name="expense",
+            index=models.Index(
+                fields=["user", "date"], name="expenses_ex_user_id_713a9d_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='expense',
-            index=models.Index(fields=['user', 'category'], name='expenses_ex_user_id_207090_idx'),
+            model_name="expense",
+            index=models.Index(
+                fields=["user", "category"], name="expenses_ex_user_id_207090_idx"
+            ),
         ),
     ]
