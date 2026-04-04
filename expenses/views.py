@@ -20,7 +20,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     ordering_fields = ["date", "amount", "created_at"]
     ordering = ["-date", "-created_at"]
 
-    # only logged in user expenses
+    # Get user's expenses
     def get_queryset(self):
         return Expense.objects.filter(user=self.request.user).order_by(
             "-date", "-created_at"
