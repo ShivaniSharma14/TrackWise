@@ -17,7 +17,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from config.dashboard import CombinedDashboardView
+from config.dashboard import (
+    CombinedDashboardView,
+    HabitProgressView,
+    ExpenseTrendView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,5 +32,15 @@ urlpatterns = [
         "api/dashboard/summary/",
         CombinedDashboardView.as_view(),
         name="combined-dashboard",
+    ),
+    path(
+        "api/dashboard/habit-progress/",
+        HabitProgressView.as_view(),
+        name="habit-progress",
+    ),
+    path(
+        "api/dashboard/expense-trend/",
+        ExpenseTrendView.as_view(),
+        name="expense-trend",
     ),
 ]

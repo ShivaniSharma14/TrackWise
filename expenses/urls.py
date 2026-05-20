@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ExpenseViewSet, ExpenseDashboardStatsView, ExpenseAnalyticsView
+from .views import ExpenseViewSet, ExpenseDashboardStatsView, ExpenseAnalyticsView, ExpenseCategoriesView
 
 
 router = DefaultRouter()
@@ -13,4 +13,5 @@ urlpatterns = [
         name="expense-dashboard-stats",
     ),
     path("stats/analytics/", ExpenseAnalyticsView.as_view(), name="expense-analytics"),
+    path("categories/", ExpenseCategoriesView.as_view(), name="expense-categories"),
 ]

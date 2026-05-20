@@ -31,6 +31,14 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+class ExpenseCategoriesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        categories = ["Food", "Transport", "Entertainment", "Shopping", "Utilities", "Health", "Other"]
+        return Response({"categories": categories})
+
+
 class ExpenseDashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
