@@ -15,6 +15,8 @@ class HabitLogSerializer(serializers.ModelSerializer):
         model = HabitLog
         fields = "__all__"
         read_only_fields = ["created_at", "updated_at"]
+        # Upsert is handled in create(); skip pre-insert unique_together validation.
+        validators = []
 
     def validate_habit(self, value):
         request = self.context.get("request")
@@ -39,3 +41,16 @@ class HabitLogSerializer(serializers.ModelSerializer):
         if date > timezone.localdate():
             raise serializers.ValidationError("Future logs are not allowed.")
         return date
+
+    def create(self, validated_data):
+        habit = validated_data["habit"]
+        log_date = validated_data["date"]
+        log, _created = HabitLog.objects.update_or_create(
+            habit=habit,
+            date=log_date,
+            defaults={
+                "value": validated_data.get("value", 0),
+                "note": validated_data.get("note", ""),
+            },
+        )
+        return log
