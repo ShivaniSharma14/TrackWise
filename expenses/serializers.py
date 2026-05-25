@@ -10,6 +10,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             "amount",
             "date",
             "category",
+            "merchant",
             "note",
             "created_at",
             "updated_at",
