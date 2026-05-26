@@ -1,0 +1,6 @@
+{
+  "name": "TrackWise",
+  "description": "Modern high-precision pro dashboard for habit tracking and expense management with detailed analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

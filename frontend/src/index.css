@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces — neutral zinc */
+  --color-background: #09090b;
+  --color-surface: #09090b;
+  --color-surface-dim: #09090b;
+  --color-surface-container: #18181b;
+  --color-surface-container-low: #18181b;
+  --color-surface-container-high: #27272a;
+  --color-surface-container-highest: #3f3f46;
+  --color-surface-container-lowest: #0f0f11;
+  --color-surface-variant: #27272a;
+  --color-surface-bright: #3f3f46;
+
+  /* Text */
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-on-surface: #fafafa;
+  --color-on-surface-variant: #a1a1aa;
+  --color-on-background: #fafafa;
+
+  /* Primary accent — muted purple (interactive UI only) */
+  --color-primary: #8579b8;
+  --color-primary-container: #8579b8;
+  --color-on-primary: #fafafa;
+  --color-on-primary-container: #fafafa;
+  --color-surface-tint: #8579b8;
+  --color-inverse-primary: #8579b8;
+  --color-primary-fixed: #8579b8;
+  --color-primary-fixed-dim: #7368a3;
+
+  /* Semantic — success / warning / error only */
+  --color-success: #4a9b73;
+  --color-on-success: #fafafa;
+  --color-warning: #a67c3a;
+  --color-on-warning: #fafafa;
+  --color-error: #c75c5c;
+  --color-on-error: #fafafa;
+
+  /* Aliases for existing class names */
+  --color-status-success: #4a9b73;
+  --color-status-warning: #a67c3a;
+  --color-status-danger: #c75c5c;
+  --color-status-streak: #a1a1aa;
+
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-outline: rgba(255, 255, 255, 0.1);
+  --color-outline-variant: rgba(255, 255, 255, 0.06);
+
+  /* Legacy tokens → neutrals or primary */
+  --color-secondary: #a1a1aa;
+  --color-tertiary: #8579b8;
+  --color-cat-food: #a1a1aa;
+  --color-cat-transport: #a1a1aa;
+  --color-cat-bills: #a1a1aa;
+  --color-cat-tech: #a1a1aa;
+  --color-secondary-container: #27272a;
+  --color-tertiary-container: #8579b8;
+  --color-inverse-surface: #fafafa;
+  --color-inverse-on-surface: #18181b;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-container-highest);
+  border-radius: 6px;
+}
+
+@layer components {
+  .panel {
+    @apply bg-surface-container rounded-lg;
+  }
+
+  .panel-elevated {
+    @apply bg-surface-container-high rounded-lg;
+  }
+
+  .page-title {
+    @apply text-lg font-semibold text-text-primary tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-text-secondary mt-0.5;
+  }
+
+  .section-title {
+    @apply text-sm font-medium text-text-primary;
+  }
+
+  .section-desc {
+    @apply text-xs text-text-muted mt-0.5;
+  }
+
+  .label {
+    @apply text-xs font-medium text-text-secondary;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium
+      bg-primary text-on-primary hover:opacity-90 transition-opacity cursor-pointer
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium
+      bg-surface-container-high text-text-primary hover:bg-surface-container-highest
+      transition-colors cursor-pointer;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium
+      text-text-secondary hover:text-text-primary hover:bg-surface-container-high
+      transition-colors cursor-pointer;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-container-lowest rounded-md py-2 px-3 text-sm text-text-primary
+      placeholder:text-text-muted outline-none ring-1 ring-border-subtle
+      focus:ring-primary/35 transition-[box-shadow];
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-text-secondary
+      hover:text-text-primary hover:bg-surface-container-high transition-colors cursor-pointer;
+  }
+
+  .nav-item-active {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium
+      text-text-primary bg-surface-container-high;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+      bg-surface-container-high text-text-secondary;
+  }
+
+  .badge-accent {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+      bg-primary/12 text-primary;
+  }
+
+  .divider {
+    @apply border-t border-border-subtle;
+  }
+
+  /* Semantic feedback — use only for matching states */
+  .alert-success {
+    @apply px-3 py-2 rounded-md bg-success/10 text-success text-sm;
+  }
+
+  .alert-error {
+    @apply px-3 py-2 rounded-md bg-error/10 text-error text-sm;
+  }
+
+  .alert-warning {
+    @apply px-3 py-2 rounded-md bg-warning/10 text-warning text-sm;
+  }
+
+  /* Charts & progress — primary tint only */
+  .fill-primary-muted {
+    @apply bg-primary/50;
+  }
+
+  .fill-primary-soft {
+    @apply bg-primary/35;
+  }
+}
