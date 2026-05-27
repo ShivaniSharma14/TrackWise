@@ -15,7 +15,7 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool, default=False)
 
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS = True 
 
