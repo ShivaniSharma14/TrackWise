@@ -6,7 +6,7 @@ const AUTH_KEY = 'quantum_auth_state';
 
 const DEFAULT_API_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
-  'http://127.0.0.1:8000';
+  'https://trackwise-production-cfc2.up.railway.app';
 
 const AUTH_DEBUG =
   typeof import.meta !== 'undefined' &&
