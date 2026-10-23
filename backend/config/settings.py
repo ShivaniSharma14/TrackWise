@@ -15,11 +15,18 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool, default=False)
 
 
-ALLOWED_HOSTS = ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "trackwise-production-cfc2.up.railway.app",
+    "localhost",
+    "127.0.0.1",
+]
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOWED_ORIGINS = [
+    "https://track-wise-sable.vercel.app",
+    "http://localhost:5173",
+]
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = False
 
 
 # Application definition
@@ -72,7 +79,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-import dj_database_url
 
 DATABASES = {
     "default": dj_database_url.config(
