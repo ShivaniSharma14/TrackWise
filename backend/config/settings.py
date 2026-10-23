@@ -16,7 +16,7 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 
 
 ALLOWED_HOSTS = [
-    "trackwise-production-cfc2.up.railway.app",
+    "trackwise-api-fk4c.onrender.com",
     "localhost",
     "127.0.0.1",
 ]
