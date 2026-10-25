@@ -168,8 +168,7 @@ export const DEFAULT_EXPENSES: Expense[] = [
     amount: 1240.00,
     category: 'Shopping',
     date: getDateString(1), // May 19, 2026
-    transaction: 'AWS Infrastructure',
-    account: 'Primary Bank (....4210)',
+    merchant: 'AWS Infrastructure',
     note: 'Monthly cloud hosting services'
   },
   {
@@ -177,8 +176,7 @@ export const DEFAULT_EXPENSES: Expense[] = [
     amount: 256.40,
     category: 'Food',
     date: getDateString(2), // May 18, 2026
-    transaction: 'Whole Foods Market',
-    account: 'Primary Bank (....4210)',
+    merchant: 'Whole Foods Market',
     note: 'Weekly family groceries'
   },
   {
@@ -186,8 +184,7 @@ export const DEFAULT_EXPENSES: Expense[] = [
     amount: 189.00,
     category: 'Utilities',
     date: getDateString(3), // May 17, 2026
-    transaction: 'City Utilities Corp',
-    account: 'Primary Bank (....4210)',
+    merchant: 'City Utilities Corp',
     note: 'Electricity, water, and sewage utilities'
   },
   {
@@ -195,8 +192,7 @@ export const DEFAULT_EXPENSES: Expense[] = [
     amount: 34.20,
     category: 'Transport',
     date: getDateString(4), // May 16, 2026
-    transaction: 'Uber Trip',
-    account: 'Primary Bank (....4210)',
+    merchant: 'Uber Trip',
     note: 'Commute ride to tech district branch'
   },
   {
@@ -204,8 +200,7 @@ export const DEFAULT_EXPENSES: Expense[] = [
     amount: 1299.00,
     category: 'Shopping',
     date: getDateString(5), // May 15, 2026
-    transaction: 'Apple Store',
-    account: 'Primary Bank (....4210)',
+    merchant: 'Apple Store',
     note: 'New hardware purchase'
   }
 ];

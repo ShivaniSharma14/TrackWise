@@ -6,7 +6,7 @@ const AUTH_KEY = 'quantum_auth_state';
 
 const DEFAULT_API_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
-  'https://trackwise-production-cfc2.up.railway.app';
+  'https://trackwise-api-fk4c.onrender.com';
 
 const AUTH_DEBUG =
   typeof import.meta !== 'undefined' &&
@@ -343,6 +343,40 @@ class ApiClient {
       email: profile.email || payload.email,
       firstName: profile.first_name || '',
       lastName: profile.last_name || '',
+    };
+
+    this.saveAuth({
+      isAuthenticated: true,
+      user: userObj,
+      accessToken: data.access,
+      refreshToken: data.refresh,
+    });
+
+    return userObj;
+  }
+
+  public async demoLogin(): Promise<any> {
+    // Request a demo session without requiring credentials.
+    const data = await this.request('/api/accounts/demo/', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+
+    // Store tokens using the same authentication system as normal login.
+    this.saveAuth({
+      isAuthenticated: true,
+      user: { email: 'demo@trackwise.app', firstName: 'Demo', lastName: 'User' },
+      accessToken: data.access,
+      refreshToken: data.refresh,
+    });
+
+    // Load the actual demo profile.
+    const profile = await this.request('/api/accounts/profile/');
+
+    const userObj = {
+      email: profile.email || 'demo@trackwise.app',
+      firstName: profile.first_name || 'Demo',
+      lastName: profile.last_name || 'User',
     };
 
     this.saveAuth({

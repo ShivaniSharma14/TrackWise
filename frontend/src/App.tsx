@@ -169,10 +169,7 @@ export default function App() {
         return 'Log expense';
       case 'add-habit':
         return 'Create Habit';
-      // case 'settings':
-      //   return 'Developer Integration Panel';
-      // case 'auth':
-      //   return 'Secure Authorization';
+
       default:
         return 'TrackWise';
     }
@@ -290,6 +287,7 @@ export default function App() {
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onMobileMenuToggle={() => setIsMobileMenuOpen((value) => !value)}
+          onSettingsClick={() => setCurrentTab('settings')}
         />
 
         <div className="flex-1 px-4 py-6 md:px-8 md:py-8 max-w-6xl mx-auto w-full pb-24 md:pb-8">

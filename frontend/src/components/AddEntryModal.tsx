@@ -37,8 +37,7 @@ export default function AddEntryModal({ isOpen, onClose, onSaveExpense, onSaveHa
       amount: parseFloat(amount),
       category: expenseCategory,
       date,
-      transaction: transaction.trim() || `${expenseCategory} Purchase`,
-      account,
+      merchant: transaction.trim() || `${expenseCategory} Purchase`,
       note: note.trim()
     });
 

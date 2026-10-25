@@ -8,6 +8,7 @@ interface HeaderProps {
   onSearchChange: (value: string) => void;
   userEmail?: string;
   onMobileMenuToggle: () => void;
+  onSettingsClick: () => void;
 }
 
 export default function Header({
@@ -17,6 +18,7 @@ export default function Header({
   onSearchChange,
   userEmail = 'svshivani2k5@gmail.com',
   onMobileMenuToggle,
+  onSettingsClick,
 }: HeaderProps) {
   return (
     <header className="w-full h-14 sticky top-0 bg-background/80 backdrop-blur-md z-40 border-b border-border-subtle flex justify-between items-center px-4 md:px-6">
@@ -53,8 +55,9 @@ export default function Header({
         </button>
 
         <button
-          onClick={() => console.info('[TrackWise:settings] Settings accessed')}
+          onClick={onSettingsClick}
           className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-container-high transition-colors cursor-pointer"
+          aria-label="Open settings"
         >
           <Settings size={16} />
         </button>

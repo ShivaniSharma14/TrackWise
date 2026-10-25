@@ -19,11 +19,13 @@ ALLOWED_HOSTS = [
     "trackwise-api-fk4c.onrender.com",
     "localhost",
     "127.0.0.1",
+
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "https://track-wise-sable.vercel.app",
     "http://localhost:5173",
+
 ]
 
 CORS_ALLOW_CREDENTIALS = False
@@ -80,11 +82,19 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL")
-    )
-}
+if config("USE_SQLITE", default=False, cast=bool):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=config("DATABASE_URL")
+        )
+    }
 
 
 
@@ -124,7 +134,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "demo_login": "30/hour",
+    },
 }
 
 

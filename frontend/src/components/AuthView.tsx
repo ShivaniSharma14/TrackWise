@@ -74,6 +74,29 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     setSuccess('Signed out successfully.');
   };
 
+  const handleDemoLogin = async () => {
+  setError('');
+  setSuccess('');
+  setLoading(true);
+
+  try {
+    await api.demoLogin();
+
+    if (!api.getAuth().isAuthenticated) {
+      throw new Error('Demo login succeeded but session was not stored.');
+    }
+
+    setSuccess('You are exploring TrackWise in read-only demo mode.');
+    setPassword('');
+    loadAuthStatus();
+    onAuthSuccess?.();
+    } catch (err: any) {
+    setError(err.message || 'Unable to start the demo. Please try again.');
+    } finally {
+    setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto space-y-4">
       {auth.isAuthenticated ? (
@@ -182,6 +205,26 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               )}
             </button>
           </form>
+
+                    {!isRegister && (
+            <div className="space-y-2">
+              <div className="text-center text-xs text-text-muted">or</div>
+
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={loading}
+                className="w-full btn-secondary"
+              >
+                <Shield size={14} />
+                Try interactive demo (read-only)
+              </button>
+
+              <p className="text-center text-xs text-text-muted">
+                Explore habits, expenses, and analytics without creating an account.
+              </p>
+            </div>
+          )}
 
           <p className="text-center text-xs text-text-muted pt-1">
             {!isRegister ? (
