@@ -6,14 +6,14 @@
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces — neutral zinc */
-  --color-background: #09090b;
-  --color-surface: #09090b;
-  --color-surface-dim: #09090b;
-  --color-surface-container: #18181b;
-  --color-surface-container-low: #18181b;
-  --color-surface-container-high: #27272a;
-  --color-surface-container-highest: #3f3f46;
-  --color-surface-container-lowest: #0f0f11;
+  --color-background: #0b0d12;
+  --color-surface: #0b0d12;
+  --color-surface-dim: #080a0f;
+  --color-surface-container: #121722;
+  --color-surface-container-low: #0f141e;
+  --color-surface-container-high: #1a2130;
+  --color-surface-container-highest: #273247;
+  --color-surface-container-lowest: #0d1119;
   --color-surface-variant: #27272a;
   --color-surface-bright: #3f3f46;
 
@@ -26,9 +26,9 @@
   --color-on-background: #fafafa;
 
   /* Primary accent — muted purple (interactive UI only) */
-  --color-primary: #8579b8;
-  --color-primary-container: #8579b8;
-  --color-on-primary: #fafafa;
+  --color-primary: #8f9cf4;
+  --color-primary-container: #34419a;
+  --color-on-primary: #0b0d12;
   --color-on-primary-container: #fafafa;
   --color-surface-tint: #8579b8;
   --color-inverse-primary: #8579b8;
@@ -50,9 +50,9 @@
   --color-status-streak: #a1a1aa;
 
   /* Borders */
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-outline: rgba(255, 255, 255, 0.1);
-  --color-outline-variant: rgba(255, 255, 255, 0.06);
+  --color-border-subtle: rgba(148, 163, 184, 0.14);
+  --color-outline: rgba(148, 163, 184, 0.22);
+  --color-outline-variant: rgba(148, 163, 184, 0.12);
 
   /* Legacy tokens → neutrals or primary */
   --color-secondary: #a1a1aa;

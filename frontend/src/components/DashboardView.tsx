@@ -381,7 +381,7 @@ export default function DashboardView({ habits, expenses, onToggleHabit, onNavig
   const spendUp = (monthChangePct ?? 0) > 0;
  
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="flex flex-col gap-7 max-w-6xl">
       {error && (
         <Alert variant="error" className="flex gap-3 items-start">
           <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -392,9 +392,12 @@ export default function DashboardView({ habits, expenses, onToggleHabit, onNavig
         </Alert>
       )}
  
-      <PageHeader title="Dashboard" subtitle={statusLine} />
- 
-      {/* ── Today's habits ── */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <PageHeader title="Good to see you" subtitle={statusLine} />
+        <span className="text-xs text-text-muted">Today&apos;s overview</span>
+      </div>
+
+      {/* ── Today&apos;s habits ── */}
       <PanelSection
         title="Today"
         description={
@@ -431,7 +434,7 @@ export default function DashboardView({ habits, expenses, onToggleHabit, onNavig
       </PanelSection>
  
       {/* ── Stat cards row ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Habits today"
           value={habits.length === 0 ? '—' : `${hbToday.completed_habits}/${hbToday.due_habits}`}
@@ -462,7 +465,7 @@ export default function DashboardView({ habits, expenses, onToggleHabit, onNavig
  
       {/* ── Habit trend + streak ── */}
       {habits.length > 0 && (
-        <Panel padding="md">
+        <Panel padding="md" className="border border-border-subtle">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium text-text-primary">Habit completion</p>

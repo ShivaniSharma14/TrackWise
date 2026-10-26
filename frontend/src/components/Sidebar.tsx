@@ -19,12 +19,18 @@ export default function Sidebar({ currentTab, onTabChange, onAddEntryClick, onLo
 
   return (
     <aside className="hidden md:flex flex-col h-screen w-[240px] fixed left-0 top-0 bg-surface-container-lowest border-r border-border-subtle z-50">
-      <div className="px-4 py-6">
-        <h1 className="text-sm font-semibold text-text-primary tracking-tight">TrackWise</h1>
-        <p className="text-xs text-text-muted mt-0.5">Habits & expenses</p>
+      <div className="px-5 py-6">
+        <div className="flex items-center gap-3">
+          <div className="size-9 rounded-xl bg-primary text-on-primary flex items-center justify-center text-xs font-bold tracking-tight">TW</div>
+          <div>
+            <h1 className="text-sm font-semibold text-text-primary tracking-tight">TrackWise</h1>
+            <p className="text-xs text-text-muted mt-0.5">Personal progress</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex-1 flex flex-col gap-0.5 px-3">
+      <div className="px-5 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">Workspace</div>
+      <nav className="flex-1 flex flex-col gap-1 px-3">
         {menuItems.map((item) => (
           <NavItem
             key={item.id}

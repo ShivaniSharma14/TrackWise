@@ -290,7 +290,7 @@ export default function App() {
           onSettingsClick={() => setCurrentTab('settings')}
         />
 
-        <div className="flex-1 px-4 py-6 md:px-8 md:py-8 max-w-6xl mx-auto w-full pb-24 md:pb-8">
+        <div className="flex-1 px-4 py-6 md:px-10 md:py-9 max-w-[1440px] mx-auto w-full pb-24 md:pb-8">
           {pageContent}
         </div>
 

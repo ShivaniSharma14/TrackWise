@@ -29,8 +29,9 @@ export default function Header({
         >
           <Menu size={18} />
         </button>
-        <div className="hidden md:block min-w-0">
+        <div className="min-w-0">
           <PageHeader title={title} headingLevel={2} className="!mt-0" />
+          <p className="hidden sm:block text-[11px] text-text-muted mt-0.5">Small actions, steady progress</p>
         </div>
       </div>
 
