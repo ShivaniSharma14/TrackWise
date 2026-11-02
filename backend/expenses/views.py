@@ -10,11 +10,14 @@ from rest_framework.views import APIView
 from expenses.services.expense_stats import get_expense_dashboard_stats
 from expenses.services.expense_analytics import get_expense_analytics
 from rest_framework.response import Response
+from accounts.throttles import DemoWriteThrottle
+from accounts.mixins import DemoWorkspaceMutationMixin
 
 
-class ExpenseViewSet(viewsets.ModelViewSet):
+class ExpenseViewSet(DemoWorkspaceMutationMixin, viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [DemoWriteThrottle]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ExpenseFilter
     ordering_fields = ["date", "amount", "created_at"]

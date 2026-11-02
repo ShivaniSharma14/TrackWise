@@ -1,19 +1,19 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+from accounts.demo_workspace import DEMO_EMAIL_PREFIX, is_demo_workspace_expired
+
 
 class IsOwner(BasePermission):
     def has_permission(self, request, view):
-        # Demo accounts can only use safe, read-only HTTP methods.
-        if getattr(request.user, "is_demo", False):
-            return request.method in SAFE_METHODS
+        if getattr(request.user, "is_demo", False) and request.method not in SAFE_METHODS:
+            return (
+                request.user.email.startswith(DEMO_EMAIL_PREFIX)
+                and not is_demo_workspace_expired(request.user)
+            )
 
         return True
 
     def has_object_permission(self, request, view, obj):
-        # Demo accounts cannot modify or delete objects.
-        if getattr(request.user, "is_demo", False):
-            return request.method in SAFE_METHODS
-
         if hasattr(obj, "user"):
             return obj.user == request.user
 

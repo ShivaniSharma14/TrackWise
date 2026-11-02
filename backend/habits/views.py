@@ -8,12 +8,15 @@ from rest_framework.views import APIView
 from .serializers import HabitSerializer, HabitLogSerializer
 from .services import streaks, stats, dashboard
 from django.utils import timezone
+from accounts.throttles import DemoWriteThrottle
+from accounts.mixins import DemoWorkspaceMutationMixin
 
 
 # Create your views here.
-class HabitViewSet(viewsets.ModelViewSet):
+class HabitViewSet(DemoWorkspaceMutationMixin, viewsets.ModelViewSet):
     serializer_class = HabitSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [DemoWriteThrottle]
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
@@ -22,9 +25,10 @@ class HabitViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-class HabitLogViewSet(viewsets.ModelViewSet):
+class HabitLogViewSet(DemoWorkspaceMutationMixin, viewsets.ModelViewSet):
     serializer_class = HabitLogSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [DemoWriteThrottle]
 
     def get_queryset(self):
         return HabitLog.objects.filter(habit__user=self.request.user)
@@ -33,9 +37,10 @@ class HabitLogViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 
-class HabitLogsByHabitViewSet(viewsets.ModelViewSet):
+class HabitLogsByHabitViewSet(DemoWorkspaceMutationMixin, viewsets.ModelViewSet):
     serializer_class = HabitLogSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [DemoWriteThrottle]
 
     def get_queryset(self):
         habit_id = self.kwargs.get("habit_id")

@@ -4,6 +4,8 @@ from datetime import date, timedelta
 from unittest.mock import patch
 
 from habits.models import Habit, HabitLog
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 from habits.services import stats, streaks
 from habits.services.dashboard import (
     build_logs_map,
@@ -184,3 +186,213 @@ class TestDashboard(TestCase):
         make_habit(self.user, start_date=TODAY, is_active=False)
         result = get_dashboard_summary(self.user)
         self.assertEqual(result, empty_dashboard_response())
+
+
+class HabitPermissionAPITests(APITestCase):
+    def setUp(self):
+        self.demo_user = User.objects.create_user(
+            email="demo@trackwise.app",
+            password="demo-password",
+            is_demo=True,
+        )
+        self.other_user = User.objects.create_user(
+            email="other-habit-test@example.com",
+            password="other-password",
+        )
+        self.demo_habit = Habit.objects.create(
+            user=self.demo_user,
+            name="Sample reading",
+            target_value=20,
+            target_unit="MINUTES",
+            start_date=date.today() - timedelta(days=7),
+        )
+        self.other_habit = Habit.objects.create(
+            user=self.other_user,
+            name="Private habit",
+            target_value=1,
+            target_unit="BOOL",
+            start_date=date.today() - timedelta(days=7),
+        )
+        self.client.force_authenticate(user=self.demo_user)
+
+    def test_demo_can_only_read_its_own_habits(self):
+        response = self.client.get("/api/habits/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item["id"] for item in response.data], [self.demo_habit.id])
+
+        response = self.client.get(f"/api/habits/{self.other_habit.id}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_legacy_shared_demo_cannot_create_habits_or_logs(self):
+        habit_response = self.client.post(
+            "/api/habits/",
+            {
+                "name": "New sample",
+                "frequency": "DAILY",
+                "target_value": 1,
+                "target_unit": "BOOL",
+                "start_date": date.today().isoformat(),
+                "is_active": True,
+            },
+            format="json",
+        )
+        log_response = self.client.post(
+            "/api/habits/logs/",
+            {
+                "habit": self.demo_habit.id,
+                "date": date.today().isoformat(),
+                "value": 1,
+                "note": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(habit_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(log_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Habit.objects.filter(user=self.demo_user).count(), 1)
+        self.assertFalse(HabitLog.objects.filter(habit=self.demo_habit).exists())
+
+    def test_demo_workspace_habit_crud_and_logs_are_owner_scoped(self):
+        demo_user = User.objects.create_user(
+            email="demo-workspace+habit@trackwise.invalid",
+            password=None,
+            is_demo=True,
+        )
+        other_demo = User.objects.create_user(
+            email="demo-workspace+other-habit@trackwise.invalid",
+            password=None,
+            is_demo=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=demo_user)
+
+        payload = {
+            "name": "Demo reading",
+            "frequency": "DAILY",
+            "target_value": 20,
+            "target_unit": "MINUTES",
+            "start_date": date.today().isoformat(),
+            "is_active": True,
+        }
+        created = client.post("/api/habits/", payload, format="json")
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED)
+        habit_id = created.data["id"]
+
+        log_response = client.post(
+            "/api/habits/logs/",
+            {
+                "habit": habit_id,
+                "date": date.today().isoformat(),
+                "value": 20,
+                "note": "",
+            },
+            format="json",
+        )
+        self.assertEqual(log_response.status_code, status.HTTP_201_CREATED)
+
+        update = client.patch(
+            f"/api/habits/{habit_id}/",
+            {"name": "Updated demo reading"},
+            format="json",
+        )
+        self.assertEqual(update.status_code, status.HTTP_200_OK)
+
+        client.force_authenticate(user=other_demo)
+        self.assertEqual(client.get("/api/habits/").data, [])
+        self.assertEqual(
+            client.get(f"/api/habits/{habit_id}/").status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+        self.assertEqual(
+            client.get(f"/api/habits/logs/{log_response.data['id']}/").status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+        client.force_authenticate(user=demo_user)
+        self.assertEqual(
+            client.delete(f"/api/habits/{self.other_habit.id}/").status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+        self.assertEqual(
+            client.delete(f"/api/habits/{habit_id}/").status_code,
+            status.HTTP_204_NO_CONTENT,
+        )
+        self.assertFalse(Habit.objects.filter(pk=habit_id).exists())
+
+    def test_demo_habit_target_validation(self):
+        demo_user = User.objects.create_user(
+            email="demo-workspace+invalid-habit@trackwise.invalid",
+            password=None,
+            is_demo=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=demo_user)
+        response = client.post(
+            "/api/habits/",
+            {
+                "name": "Invalid target",
+                "frequency": "DAILY",
+                "target_value": 0,
+                "target_unit": "BOOL",
+                "start_date": date.today().isoformat(),
+                "is_active": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_authenticated_user_can_create_habits_and_log_them(self):
+        user = User.objects.create_user(
+            email="owner-habit-test@example.com",
+            password="owner-password",
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        habit_response = client.post(
+            "/api/habits/",
+            {
+                "name": "My reading",
+                "frequency": "DAILY",
+                "target_value": 20,
+                "target_unit": "MINUTES",
+                "start_date": date.today().isoformat(),
+                "is_active": True,
+            },
+            format="json",
+        )
+        self.assertEqual(habit_response.status_code, status.HTTP_201_CREATED)
+        habit_id = habit_response.data["id"]
+
+        log_response = client.post(
+            "/api/habits/logs/",
+            {
+                "habit": habit_id,
+                "date": date.today().isoformat(),
+                "value": 20,
+                "note": "",
+            },
+            format="json",
+        )
+        self.assertEqual(log_response.status_code, status.HTTP_201_CREATED)
+
+    def test_user_cannot_log_another_users_habit(self):
+        user = User.objects.create_user(
+            email="cross-habit-test@example.com",
+            password="owner-password",
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        response = client.post(
+            "/api/habits/logs/",
+            {
+                "habit": self.other_habit.id,
+                "date": date.today().isoformat(),
+                "value": 1,
+                "note": "",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(HabitLog.objects.filter(habit=self.other_habit).exists())

@@ -129,7 +129,7 @@ STATIC_URL = "static/"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.authentication.DemoJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -138,7 +138,9 @@ REST_FRAMEWORK = {
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "demo_login": "30/hour",
+        "demo_login": "10/hour",
+        "demo_reset": "20/hour",
+        "demo_write": "120/hour",
     },
 }
 
