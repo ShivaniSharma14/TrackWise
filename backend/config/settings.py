@@ -26,6 +26,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://track-wise-sable.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://127.0.0.1:3000", 
     "https://ideal-disco-97j96x976p4vhxgp-3000.app.github.dev",
 
 ]
