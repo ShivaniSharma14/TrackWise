@@ -1,322 +1,249 @@
-import React, { useState } from 'react';
-import { X, DollarSign, Calendar, Landmark, Notebook, Plus, Smile } from 'lucide-react';
-import { HabitCategory, ExpenseCategory, Habit, Expense, EXPENSE_CATEGORIES } from '../types';
-import { Panel } from './ui';
+import { FormEvent, useState } from 'react';
+import { CalendarDays, Check, CircleDollarSign, FileText, Plus, Ruler, Tag, X } from 'lucide-react';
+import { Expense, ExpenseCategory, HabitCreatePayload, EXPENSE_CATEGORIES } from '../types';
+import { Alert, Panel } from './ui';
 
 interface AddEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveExpense: (expense: Omit<Expense, 'id'>) => void;
-  onSaveHabit: (habit: Omit<Habit, 'id' | 'history7d' | 'history' | 'streak'>) => void;
+  onSaveExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  onSaveHabit: (habit: HabitCreatePayload) => Promise<void>;
 }
 
-export default function AddEntryModal({ isOpen, onClose, onSaveExpense, onSaveHabit }: AddEntryModalProps) {
-  const [entryType, setEntryType] = useState<'expense' | 'habit'>('expense');
+type EntryType = 'expense' | 'habit';
+type TargetUnit = HabitCreatePayload['targetUnit'];
 
-  // Expense states
+const TARGET_UNITS: Array<{ value: TargetUnit; label: string }> = [
+  { value: 'COUNT', label: 'Count' },
+  { value: 'MINUTES', label: 'Minutes' },
+  { value: 'BOOL', label: 'Yes / No' },
+];
+const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
+  Food: '🍲',
+  Transport: '🚗',
+  Entertainment: '🎬',
+  Shopping: '🛍️',
+  Utilities: '🧾',
+  Health: '❤️',
+  Other: '📦',
+};
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export default function AddEntryModal({
+  isOpen,
+  onClose,
+  onSaveExpense,
+  onSaveHabit,
+}: AddEntryModalProps) {
+  const [entryType, setEntryType] = useState<EntryType>('expense');
   const [amount, setAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Food');
-  const [date, setDate] = useState('2026-05-20');
-  const [account, setAccount] = useState('Primary Bank (....4210)');
-  const [transaction, setTransaction] = useState('');
+  const [merchant, setMerchant] = useState('');
+  const [date, setDate] = useState(todayISO);
   const [note, setNote] = useState('');
-
-  // Habit states
   const [habitName, setHabitName] = useState('');
-  const [habitCategory, setHabitCategory] = useState<HabitCategory>('Health');
-  const [completionTarget, setCompletionTarget] = useState('85');
+  const [targetValue, setTargetValue] = useState('1');
+  const [targetUnit, setTargetUnit] = useState<TargetUnit>('COUNT');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleExpenseSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || parseFloat(amount) <= 0) {
-      return;
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      if (entryType === 'expense') {
+        const parsedAmount = Number(amount);
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || parsedAmount > 999999.99) {
+          throw new Error('Enter an expense amount between ₹0.01 and ₹999,999.99.');
+        }
+        await onSaveExpense({
+          amount: Number(parsedAmount.toFixed(2)),
+          category: expenseCategory,
+          date,
+          merchant: merchant.trim(),
+          note: note.trim(),
+        });
+      } else {
+        const parsedTarget = Number.parseInt(targetValue, 10);
+        if (!habitName.trim()) throw new Error('Enter a name for your habit.');
+        if (targetUnit !== 'BOOL' && (!Number.isInteger(parsedTarget) || parsedTarget < 1)) {
+          throw new Error('The daily target must be at least 1.');
+        }
+        await onSaveHabit({
+          name: habitName.trim(),
+          frequency: 'DAILY',
+          targetValue: targetUnit === 'BOOL' ? 1 : parsedTarget,
+          targetUnit,
+          createdDate: date,
+        });
+      }
+
+      setAmount('');
+      setMerchant('');
+      setNote('');
+      setHabitName('');
+      setDate(todayISO());
+      onClose();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save this item. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    onSaveExpense({
-      amount: parseFloat(amount),
-      category: expenseCategory,
-      date,
-      merchant: transaction.trim() || `${expenseCategory} Purchase`,
-      note: note.trim()
-    });
-
-    // Reset state & close
-    setAmount('');
-    setTransaction('');
-    setNote('');
-    onClose();
   };
-
-  const handleHabitSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!habitName.trim()) {
-      return;
-    }
-    onSaveHabit({
-      name: habitName.trim(),
-      category: habitCategory,
-      completionRate: parseInt(completionTarget, 10),
-      isCompletedToday: false,
-      createdDate: new Date('2026-05-20').toISOString().split('T')[0]
-    });
-
-    // Reset state & close
-    setHabitName('');
-    onClose();
-  };
-
-  const categoryMeta: Record<ExpenseCategory, { icon: string }> = {
-    Food: { icon: '🍲' },
-    Transport: { icon: '🚗' },
-    Entertainment: { icon: '🎬' },
-    Shopping: { icon: '🛍️' },
-    Utilities: { icon: '🧾' },
-    Health: { icon: '❤️' },
-    Other: { icon: '📦' },
-  };
-  const expenseCategories = EXPENSE_CATEGORIES.map((name) => ({
-    name,
-    ...categoryMeta[name],
-  }));
-
-  const habitCategories: HabitCategory[] = ['Health', 'Productivity', 'Finance', 'Education'];
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !saving) onClose();
+      }}
+    >
       <Panel
-        padding="md"
-        className="w-full max-w-lg relative"
-        onClick={(e) => e.stopPropagation()}
+        padding="lg"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-add-title"
+        className="app-dialog relative my-auto max-h-[calc(100vh-2rem)] w-full overflow-y-auto"
       >
-        {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-full text-text-muted hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+          disabled={saving}
+          aria-label="Close quick add"
+          className="absolute right-5 top-5 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-container-high hover:text-text-primary disabled:opacity-50"
         >
           <X size={18} />
         </button>
-
-        {/* Toggle between Expense and Habit */}
-        <div className="flex bg-surface-container-high p-0.5 rounded-md mb-6 max-w-xs mx-auto">
-          <button
-            onClick={() => setEntryType('expense')}
-            className={`flex-1 py-1.5 px-3 rounded text-sm font-medium transition-colors cursor-pointer ${
-              entryType === 'expense' ? 'bg-surface-container-highest text-text-primary' : 'text-text-muted'
-            }`}
-          >
-            Expense
-          </button>
-          <button
-            onClick={() => setEntryType('habit')}
-            className={`flex-1 py-1.5 px-3 rounded text-sm font-medium transition-colors cursor-pointer ${
-              entryType === 'habit' ? 'bg-surface-container-highest text-text-primary' : 'text-text-muted'
-            }`}
-          >
-            Habit
-          </button>
+        <p className="eyebrow mb-2">QUICK ADD</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="quick-add-title" className="text-xl font-semibold tracking-tight text-text-primary">Add to your workspace</h2>
+            <p className="mt-1 text-sm text-text-muted">Capture a transaction or start a new daily habit.</p>
+          </div>
         </div>
 
-        {entryType === 'expense' ? (
-          <div>
-            <div className="mb-6">
-              <h3 className="text-base font-semibold text-text-primary mb-1">Log New Expense</h3>
-              <p className="text-xs text-text-muted">Enter the transaction details to update your records.</p>
-            </div>
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-border-subtle bg-surface-container-low p-1.5">
+          {(['expense', 'habit'] as const).map((type) => {
+            const active = entryType === type;
+            const Icon = type === 'expense' ? CircleDollarSign : Check;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => { setEntryType(type); setError(''); }}
+                aria-pressed={active}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                  active ? 'bg-primary/15 text-primary ring-1 ring-primary/20' : 'text-text-muted hover:text-text-primary'
+                }`}
+              >
+                <Icon size={15} />
+                {type === 'expense' ? 'Expense' : 'Habit'}
+              </button>
+            );
+          })}
+        </div>
 
-            <form onSubmit={handleExpenseSubmit} className="space-y-4">
-              {/* Amount */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Transaction Amount ($)
+        {error && <Alert variant="error" className="mb-5">{error}</Alert>}
+
+        <form onSubmit={submit} className="space-y-5">
+          {entryType === 'expense' ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block space-y-1.5">
+                  <span className="label">Amount</span>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">₹</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0.01"
+                      max="999999.99"
+                      step="0.01"
+                      required
+                      autoFocus
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      className="input-field pl-8 text-lg font-semibold tabular-nums"
+                      placeholder="0.00"
+                    />
+                  </div>
                 </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-medium text-lg">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="input-field pl-10 text-lg font-semibold py-3"
-                  />
-                </div>
-              </div>
-
-              {/* Category */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Category
+                <label className="block space-y-1.5">
+                  <span className="label flex items-center gap-1.5"><CalendarDays size={13} /> Date</span>
+                  <input type="date" required max={todayISO()} value={date} onChange={(event) => setDate(event.target.value)} className="input-field color-scheme-dark" />
                 </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {expenseCategories.map((cat) => {
-                    const isActive = expenseCategory === cat.name;
-                    return (
-                      <button
-                        key={cat.name}
-                        type="button"
-                        onClick={() => setExpenseCategory(cat.name)}
-                        className={`flex flex-col items-center gap-2 p-2 rounded-md transition-colors cursor-pointer ${
-                          isActive ? 'bg-primary/12 ring-1 ring-primary/30' : 'bg-surface-container-high hover:bg-surface-container-highest'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg bg-surface-container-highest">
-                          <span>{cat.icon}</span>
-                        </div>
-                        <span className="text-[9px] font-medium text-on-surface-variant truncate w-full text-center">
-                          {cat.name.split(' ')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
-
-              {/* Transaction Name */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Transaction / Merchant
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. AWS Cloud, Whole Foods"
-                    value={transaction}
-                    onChange={(e) => setTransaction(e.target.value)}
-                    className="input-field"
-                  />
+              <fieldset className="space-y-2">
+                <legend className="label mb-2 flex items-center gap-1.5"><Tag size={13} /> Category</legend>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {EXPENSE_CATEGORIES.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setExpenseCategory(category)}
+                      aria-pressed={expenseCategory === category}
+                      className={`flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 transition-all ${
+                        expenseCategory === category
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-border-subtle bg-surface-container-low text-text-secondary hover:border-outline hover:bg-surface-container-high'
+                      }`}
+                    >
+                      <span className="text-base" aria-hidden="true">{CATEGORY_ICONS[category]}</span>
+                      <span className="text-[11px] font-medium">{category}</span>
+                    </button>
+                  ))}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Date */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                    Transaction Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="input-field text-xs color-scheme-dark"
-                  />
-                </div>
-
-                {/* Account */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                    Account
-                  </label>
-                  <select
-                    value={account}
-                    onChange={(e) => setAccount(e.target.value)}
-                    className="input-field text-xs dropdown-dark"
-                  >
-                    <option value="Primary Bank (....4210)">Primary Bank (....4210)</option>
-                    <option value="Savings A/C (....9902)">Savings A/C (....9902)</option>
-                    <option value="Digital Wallet">Digital Wallet</option>
+              </fieldset>
+              <label className="block space-y-1.5">
+                <span className="label">Merchant</span>
+                <input value={merchant} onChange={(event) => setMerchant(event.target.value)} maxLength={150} className="input-field" placeholder="Where was this purchase?" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="label">Note <span className="font-normal text-text-muted">(optional)</span></span>
+                <textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={255} className="input-field resize-y" placeholder="Add a detail to remember…" />
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="block space-y-1.5">
+                <span className="label flex items-center gap-1.5"><FileText size={13} /> Habit name</span>
+                <input value={habitName} onChange={(event) => setHabitName(event.target.value)} maxLength={100} required autoFocus className="input-field" placeholder="e.g. Morning walk, Read 20 pages" />
+              </label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block space-y-1.5">
+                  <span className="label flex items-center gap-1.5"><Ruler size={13} /> Measure</span>
+                  <select value={targetUnit} onChange={(event) => setTargetUnit(event.target.value as TargetUnit)} className="input-field">
+                    {TARGET_UNITS.map((unit) => <option key={unit.value} value={unit.value}>{unit.label}</option>)}
                   </select>
-                </div>
-              </div>
-
-              {/* Note */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Note (Optional)
                 </label>
-                <textarea
-                  placeholder="What was this for? e.g. Weekly software subscriptions"
-                  rows={2}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="input-field text-xs resize-none"
-                />
+                {targetUnit !== 'BOOL' && (
+                  <label className="block space-y-1.5">
+                    <span className="label">Daily target</span>
+                    <input type="number" min="1" required value={targetValue} onChange={(event) => setTargetValue(event.target.value)} className="input-field" />
+                  </label>
+                )}
               </div>
+              <label className="block max-w-sm space-y-1.5">
+                <span className="label flex items-center gap-1.5"><CalendarDays size={13} /> Start date</span>
+                <input type="date" required max={todayISO()} value={date} onChange={(event) => setDate(event.target.value)} className="input-field color-scheme-dark" />
+              </label>
+            </>
+          )}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 divider">
-                <button type="button" onClick={onClose} className="flex-1 btn-secondary">Cancel</button>
-                <button type="submit" className="flex-[2] btn-primary">Save expense</button>
-              </div>
-            </form>
+          <div className="flex gap-3 border-t border-border-subtle pt-5">
+            <button type="button" onClick={onClose} disabled={saving} className="flex-1 btn-secondary">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-[1.5] btn-primary">
+              <Plus size={15} />
+              {saving ? 'Saving…' : entryType === 'expense' ? 'Save expense' : 'Create habit'}
+            </button>
           </div>
-        ) : (
-          <div>
-            <div className="mb-6">
-              <h3 className="text-base font-semibold text-text-primary mb-1">Create Daily Habit</h3>
-              <p className="text-xs text-text-muted">Define a new tracking loop to build long-term consistency.</p>
-            </div>
-
-            <form onSubmit={handleHabitSubmit} className="space-y-4">
-              {/* Habit Name */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Habit Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Code 1 Hour, Core Workout"
-                  value={habitName}
-                  onChange={(e) => setHabitName(e.target.value)}
-                  className="input-field"
-                />
-              </div>
-
-              {/* Category */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Domain Category
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {habitCategories.map((cat) => {
-                    const isActive = habitCategory === cat;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setHabitCategory(cat)}
-                        className={`py-2 px-3 rounded-md text-sm font-medium capitalize transition-colors cursor-pointer ${
-                          isActive ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-text-secondary'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Completion Target Percent */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted block">
-                  Completion Target Rate (%)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="50"
-                    max="100"
-                    step="5"
-                    value={completionTarget}
-                    onChange={(e) => setCompletionTarget(e.target.value)}
-                    className="flex-1 accent-primary"
-                  />
-                  <span className="text-xs font-bold text-primary w-12 text-right">{completionTarget}%</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 divider">
-                <button type="button" onClick={onClose} className="flex-1 btn-secondary">Cancel</button>
-                <button type="submit" className="flex-[2] btn-primary">Add habit</button>
-              </div>
-            </form>
-          </div>
-        )}
+        </form>
       </Panel>
     </div>
   );

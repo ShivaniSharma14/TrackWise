@@ -6,9 +6,15 @@ import { Alert, Panel } from './ui';
 
 interface AuthViewProps {
   onAuthSuccess?: () => void;
+  initialMode?: 'login' | 'signup';
+  showFormWhenAuthenticated?: boolean;
 }
 
-export default function AuthView({ onAuthSuccess }: AuthViewProps) {
+export default function AuthView({
+  onAuthSuccess,
+  initialMode = 'login',
+  showFormWhenAuthenticated = false,
+}: AuthViewProps) {
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
@@ -16,7 +22,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     refreshToken: null,
   });
 
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(initialMode === 'signup');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,20 +53,19 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     try {
       if (isRegister) {
         await api.register({ firstName, lastName, email, password });
-        setSuccess('Registration successful. Please sign in.');
         setIsRegister(false);
-        setPassword('');
-        setConfirmPassword('');
-      } else {
-        const user = await api.login({ email, password });
-        if (!api.getAuth().isAuthenticated) {
-          throw new Error('Login succeeded but session was not stored.');
-        }
-        setSuccess(`Welcome back, ${user.firstName || 'there'}.`);
-        setPassword('');
-        loadAuthStatus();
-        onAuthSuccess?.();
       }
+
+      const user = await api.login({ email, password });
+      if (!api.getAuth().isAuthenticated) {
+        throw new Error('Login succeeded but session was not stored.');
+      }
+
+      setSuccess(`${isRegister ? 'Welcome' : 'Welcome back'}, ${user.firstName || 'there'}.`);
+      setPassword('');
+      setConfirmPassword('');
+      loadAuthStatus();
+      onAuthSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Check your API connection.');
     } finally {
@@ -75,31 +80,32 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
   };
 
   const handleDemoLogin = async () => {
-  setError('');
-  setSuccess('');
-  setLoading(true);
+    setError('');
+    setSuccess('');
+    setLoading(true);
 
-  try {
-    await api.demoLogin();
+    try {
+      await api.demoLogin();
 
-    if (!api.getAuth().isAuthenticated) {
-      throw new Error('Demo login succeeded but session was not stored.');
-    }
+      if (!api.getAuth().isAuthenticated) {
+        throw new Error('Demo login succeeded but session was not stored.');
+      }
 
-    setSuccess('You are exploring TrackWise in read-only demo mode.');
-    setPassword('');
-    loadAuthStatus();
-    onAuthSuccess?.();
+      setSuccess('Your isolated sample workspace is ready. Changes remain temporary.');
+      setPassword('');
+      loadAuthStatus();
+      onAuthSuccess?.();
     } catch (err: any) {
-    setError(err.message || 'Unable to start the demo. Please try again.');
+      setError(err.message || 'Unable to start the demo. Please try again.');
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
+
   return (
     <div className="max-w-md mx-auto space-y-4">
-      {auth.isAuthenticated ? (
+      {auth.isAuthenticated && !showFormWhenAuthenticated ? (
         <Panel padding="md" className="space-y-5 text-center">
           <div className="w-12 h-12 bg-surface-container-high text-text-primary rounded-full flex items-center justify-center mx-auto text-lg font-semibold">
             {(auth.user?.firstName?.[0] || 'U').toUpperCase()}
@@ -217,7 +223,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
                 className="w-full btn-secondary"
               >
                 <Shield size={14} />
-                Try interactive demo (read-only)
+                Explore interactive demo
               </button>
 
               <p className="text-center text-xs text-text-muted">

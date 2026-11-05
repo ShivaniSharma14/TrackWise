@@ -1,8 +1,22 @@
-import { Habit, Expense, HabitCategory, ExpenseCategory, AuthState, BackendConfig } from '../types';
+import {
+  Habit,
+  HabitCreatePayload,
+  HabitDashboardSummary,
+  HabitLog,
+  Expense,
+  AuthState,
+  BackendConfig,
+  CombinedDashboardSummary,
+  ExpenseAnalytics,
+  ExpenseDashboardStats,
+  ExpenseUpdatePayload,
+  HabitUpdatePayload,
+} from '../types';
 
 // State keys
 const CONFIG_KEY = 'quantum_backend_config';
 const AUTH_KEY = 'quantum_auth_state';
+const PRE_DEMO_AUTH_KEY = 'trackwise_auth_before_demo';
 
 const DEFAULT_API_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
@@ -114,6 +128,10 @@ class ApiClient {
     return false;
   }
 
+  private isDemoProfile(profile: { email?: string | null; is_demo?: boolean | null }): boolean {
+    return profile.is_demo === true;
+  }
+
   /** Validates stored JWTs against the backend before showing the dashboard. */
   public async initializeAuth(): Promise<AuthInitResult> {
     this.logAuth('initializeAuth: start');
@@ -132,6 +150,8 @@ class ApiClient {
           email: profile.email,
           firstName: profile.first_name || '',
           lastName: profile.last_name || '',
+          isDemo: this.isDemoProfile(profile),
+          demoExpiresAt: profile.demo_expires_at || undefined,
         },
         accessToken: this.auth.accessToken,
         refreshToken: this.auth.refreshToken,
@@ -202,6 +222,7 @@ class ApiClient {
     const url = `${this.config.baseUrl}${path}`;
     const method = (options.method || 'GET').toUpperCase();
     const headers = new Headers(options.headers || {});
+    const requestAccessToken = this.auth.accessToken;
 
     if (this.auth.accessToken) {
       headers.set('Authorization', `Bearer ${this.auth.accessToken}`);
@@ -231,7 +252,12 @@ class ApiClient {
       this.logRequest('← response', { method, url, status: response.status });
 
       // Encountered unauthorized, try refreshing token
-      if (response.status === 401 && this.auth.refreshToken && !path.includes('/accounts/refresh/')) {
+      if (
+        response.status === 401 &&
+        this.auth.refreshToken &&
+        this.auth.accessToken === requestAccessToken &&
+        !path.includes('/accounts/refresh/')
+      ) {
         this.logAuth('401 received — attempting token refresh', { path });
         const refreshed = await this.rotateToken();
         if (refreshed) {
@@ -325,120 +351,172 @@ class ApiClient {
       }),
     });
 
-    this.saveAuth({
-      isAuthenticated: true,
-      user: { email: payload.email, firstName: '', lastName: '' },
+    const previousAuth = this.auth;
+    this.auth = {
+      isAuthenticated: false,
+      user: null,
       accessToken: data.access,
       refreshToken: data.refresh,
-    });
-
-    let profile: any = {};
-    try {
-      profile = await this.request('/api/accounts/profile/');
-    } catch {
-      profile = {};
-    }
-
-    const userObj = {
-      email: profile.email || payload.email,
-      firstName: profile.first_name || '',
-      lastName: profile.last_name || '',
     };
+    try {
+      const profile = await this.request('/api/accounts/profile/');
+      const userObj = {
+        email: profile.email || payload.email,
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        isDemo: this.isDemoProfile(profile),
+        demoExpiresAt: profile.demo_expires_at || undefined,
+      };
 
-    this.saveAuth({
-      isAuthenticated: true,
-      user: userObj,
-      accessToken: data.access,
-      refreshToken: data.refresh,
-    });
+      this.saveAuth({
+        isAuthenticated: true,
+        user: userObj,
+        accessToken: data.access,
+        refreshToken: data.refresh,
+      });
 
-    return userObj;
+      return userObj;
+    } catch (error) {
+      this.auth = previousAuth;
+      throw error;
+    }
   }
 
   public async demoLogin(): Promise<any> {
-    // Request a demo session without requiring credentials.
+    const previousAuth = this.auth;
+    if (
+      previousAuth.accessToken &&
+      previousAuth.refreshToken &&
+      previousAuth.user?.isDemo !== true
+    ) {
+      try {
+        sessionStorage.setItem(PRE_DEMO_AUTH_KEY, JSON.stringify({
+          user: previousAuth.user,
+          accessToken: previousAuth.accessToken,
+          refreshToken: previousAuth.refreshToken,
+        }));
+      } catch {
+        throw new Error('Unable to safely preserve your current sign-in before entering the demo.');
+      }
+    } else if (previousAuth.user?.isDemo !== true) {
+      try {
+        sessionStorage.removeItem(PRE_DEMO_AUTH_KEY);
+      } catch {
+        throw new Error('Unable to safely start the demo in this browser session.');
+      }
+    }
+
     const data = await this.request('/api/accounts/demo/', {
       method: 'POST',
       body: JSON.stringify({}),
     });
 
-    // Store tokens using the same authentication system as normal login.
-    this.saveAuth({
-      isAuthenticated: true,
-      user: { email: 'demo@trackwise.app', firstName: 'Demo', lastName: 'User' },
+    this.auth = {
+      isAuthenticated: false,
+      user: null,
       accessToken: data.access,
       refreshToken: data.refresh,
-    });
-
-    // Load the actual demo profile.
-    const profile = await this.request('/api/accounts/profile/');
-
-    const userObj = {
-      email: profile.email || 'demo@trackwise.app',
-      firstName: profile.first_name || 'Demo',
-      lastName: profile.last_name || 'User',
     };
+    try {
+      const profile = await this.request('/api/accounts/profile/');
+      if (!this.isDemoProfile(profile)) {
+        throw new Error('The demo endpoint did not return a designated demo account.');
+      }
 
-    this.saveAuth({
-      isAuthenticated: true,
-      user: userObj,
-      accessToken: data.access,
-      refreshToken: data.refresh,
+      const userObj = {
+        email: profile.email,
+        firstName: profile.first_name || 'Demo',
+        lastName: profile.last_name || 'User',
+        isDemo: true,
+        demoExpiresAt: profile.demo_expires_at || data.expires_at,
+      };
+
+      this.saveAuth({
+        isAuthenticated: true,
+        user: userObj,
+        accessToken: data.access,
+        refreshToken: data.refresh,
+      });
+
+      return userObj;
+    } catch (error) {
+      this.auth = previousAuth;
+      if (previousAuth.accessToken && previousAuth.refreshToken) {
+        this.persistCredentials();
+      } else {
+        this.clearAuth();
+      }
+      throw error;
+    }
+  }
+
+  public async resetDemoWorkspace(): Promise<void> {
+    await this.request('/api/accounts/demo/reset/', {
+      method: 'POST',
+      body: JSON.stringify({}),
     });
+  }
 
-    return userObj;
+  public async exitDemo(): Promise<AuthInitResult> {
+    if (this.auth.user?.isDemo !== true) {
+      return { ok: false };
+    }
+
+    let saved: string | null;
+    try {
+      saved = sessionStorage.getItem(PRE_DEMO_AUTH_KEY);
+      sessionStorage.removeItem(PRE_DEMO_AUTH_KEY);
+    } catch {
+      throw new Error('Unable to restore the previous sign-in from this browser session.');
+    }
+
+    this.logout();
+    if (!saved) return { ok: false };
+
+    try {
+      const previous = JSON.parse(saved) as PersistedAuth;
+      this.auth = {
+        isAuthenticated: false,
+        user: previous.user,
+        accessToken: previous.accessToken,
+        refreshToken: previous.refreshToken,
+      };
+      this.persistCredentials();
+      return await this.initializeAuth();
+    } catch (error) {
+      this.clearAuth();
+      throw error;
+    }
   }
 
   // --- HABIT API CRUD ---
   public async getHabits(): Promise<Habit[]> {
-    const data = await this.request('/api/habits/');
-    let todayHabits: any[] = [];
-    try {
-      const todayPayload = await this.request('/api/habits/today/');
-      todayHabits = todayPayload?.habits || [];
-    } catch {
-      todayHabits = [];
+    const [data, todayPayload] = await Promise.all([
+      this.request('/api/habits/'),
+      this.request('/api/habits/today/'),
+    ]);
+    if (!Array.isArray(data) || !Array.isArray(todayPayload?.habits)) {
+      throw new Error('Habit endpoints returned an unexpected response.');
     }
-
     const todayById = new Map<string, boolean>();
-    for (const h of todayHabits) {
-      const target = h.target_value ?? 1;
-      const completed = (h.logs || []).some((log: any) => log.value >= target);
+    for (const h of todayPayload.habits) {
+      if (!Array.isArray(h.logs) || typeof h.target_value !== 'number') {
+        throw new Error('Today-habits endpoint returned an unexpected record.');
+      }
+      const completed = h.logs.some((log: unknown) =>
+        Boolean(log && typeof log === 'object' && 'value' in log && typeof log.value === 'number' && log.value >= h.target_value)
+      );
       todayById.set(String(h.id), completed);
     }
 
-    return Promise.all(
-      data.map(async (h: any) => {
-        const mapped = this.mapBackendHabit(h);
-        if (todayById.has(mapped.id)) {
-          mapped.isCompletedToday = todayById.get(mapped.id) ?? false;
-        }
-
-        try {
-          const streak = await this.getHabitStreak(mapped.id);
-          mapped.streak = streak.current_streak ?? 0;
-          if (streak.today_status === 'completed') mapped.isCompletedToday = true;
-          if (streak.today_status === 'pending') mapped.isCompletedToday = false;
-        } catch {
-          // Keep today-endpoint derived status when streak lookup fails.
-        }
-
-        try {
-          const stats = await this.getHabitStats(mapped.id);
-          mapped.completionRate = Math.round(stats.completion_rate ?? 0);
-          mapped.history7d = (stats.last_7_days_status || []).map(
-            (day: { completed: boolean }) => day.completed === true
-          );
-        } catch {
-          // Stats are optional for list rendering.
-        }
-
-        return mapped;
-      })
-    );
+    return data.map((habit: unknown) => {
+      const mapped = this.mapBackendHabit(habit);
+      mapped.isCompletedToday = todayById.get(mapped.id) ?? false;
+      return mapped;
+    });
   }
 
-  public async createHabit(habit: Omit<Habit, 'id' | 'streak' | 'history7d' | 'completionRate' | 'history'>): Promise<Habit> {
+  public async createHabit(habit: HabitCreatePayload): Promise<Habit> {
     const response = await this.request('/api/habits/', {
       method: 'POST',
       body: JSON.stringify({
@@ -460,6 +538,19 @@ class ApiClient {
     });
   }
 
+  public async updateHabit(id: string, habit: HabitUpdatePayload): Promise<Habit> {
+    const response = await this.request(`/api/habits/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        ...(habit.name !== undefined ? { name: habit.name } : {}),
+        ...(habit.targetValue !== undefined ? { target_value: habit.targetValue } : {}),
+        ...(habit.targetUnit !== undefined ? { target_unit: habit.targetUnit } : {}),
+        ...(habit.createdDate !== undefined ? { start_date: habit.createdDate } : {}),
+      }),
+    });
+    return this.mapBackendHabit(response);
+  }
+
   public async logHabit(habitId: string, date: string, value: number, note?: string): Promise<any> {
     return await this.request('/api/habits/logs/', {
       method: 'POST',
@@ -472,23 +563,68 @@ class ApiClient {
     });
   }
 
-  public async getHabitStreak(id: string): Promise<any> {
+  public async getHabitLogs(): Promise<HabitLog[]> {
+    const response = await this.request('/api/habits/logs/');
+    if (!Array.isArray(response)) {
+      throw new Error('Habit history returned an unexpected response.');
+    }
+    return response.map((value: unknown) => {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        !('id' in value) ||
+        !('habit' in value) ||
+        !('date' in value) ||
+        !('value' in value) ||
+        !('note' in value) ||
+        typeof value.id !== 'number' ||
+        typeof value.habit !== 'number' ||
+        typeof value.date !== 'string' ||
+        typeof value.value !== 'number' ||
+        typeof value.note !== 'string'
+      ) {
+        throw new Error('Habit history returned a record with an unexpected shape.');
+      }
+      const log = value as {
+        id: number;
+        habit: number;
+        date: string;
+        value: number;
+        note: string;
+        created_at?: string;
+        updated_at?: string;
+      };
+      return {
+        id: log.id,
+        habit: log.habit,
+        date: log.date,
+        value: log.value,
+        note: log.note,
+        created_at: log.created_at,
+        updated_at: log.updated_at,
+      };
+    });
+  }
+
+  public async getHabitStreak(id: string): Promise<{ habit_id: number; habit_name: string; current_streak: number; today_status: string }> {
     return await this.request(`/api/habits/${id}/streak/`);
   }
 
-  public async getHabitStats(id: string): Promise<any> {
+  public async getHabitStats(id: string): Promise<{
+    habit_id: number;
+    habit_name: string;
+    current_streak: number;
+    today_status: string;
+    total_completed_days: number;
+    longest_streak: number;
+    completion_rate: number;
+    last_7_days_status: Array<{ date: string; completed: boolean }>;
+  }> {
     return await this.request(`/api/habits/${id}/stats/`);
   }
 
-  public async getHabitDashboardSummary(): Promise<any> {
-    const response = await this.request('/api/habits/dashboard/summary/');
-    return {
-      ...response,
-      today_summary: response?.today || response?.today_summary,
-      trend: Array.isArray(response?.trend)
-        ? response.trend
-        : response?.trend?.last_7_days || [],
-    };
+  public async getHabitDashboardSummary(): Promise<HabitDashboardSummary> {
+    return await this.request('/api/habits/dashboard/summary/');
   }
 
   // --- EXPENSE API CRUD ---
@@ -498,6 +634,7 @@ class ApiClient {
     date_to?: string;
     min_amount?: number;
     max_amount?: number;
+    ordering?: '-date' | '-date,-created_at' | 'date' | 'date,created_at' | '-amount' | '-amount,-date' | 'amount' | 'amount,date';
   }): Promise<Expense[]> {
     let url = '/api/expenses/';
     const params = new URLSearchParams();
@@ -507,11 +644,15 @@ class ApiClient {
       if (filters.date_to) params.append('date_to', filters.date_to);
       if (filters.min_amount !== undefined) params.append('min_amount', String(filters.min_amount));
       if (filters.max_amount !== undefined) params.append('max_amount', String(filters.max_amount));
+      if (filters.ordering) params.append('ordering', filters.ordering);
     }
     const qStr = params.toString();
     if (qStr) url += `?${qStr}`;
 
     const data = await this.request(url);
+    if (!Array.isArray(data)) {
+      throw new Error('Expense endpoint returned an unexpected response.');
+    }
     return data.map((exp: any) => this.mapBackendExpense(exp));
   }
 
@@ -536,100 +677,84 @@ class ApiClient {
     });
   }
 
-  public async getExpenseDashboardStats(): Promise<any> {
-    const response = await this.request('/api/expenses/stats/dashboard/');
-    return {
-      ...response,
-      last_7_days: response?.last_7_days || response?.last_7_days_spending || [],
-      month_change:
-        typeof response?.month_change === 'object'
-          ? response.month_change?.percentage_change ?? 0
-          : response?.month_change ?? 0,
-      top_category_this_month:
-        typeof response?.top_category_this_month === 'object'
-          ? response.top_category_this_month?.category || 'None'
-          : response.top_category_this_month || 'None',
-      monthly_spending_history: response?.monthly_spending_history || [],
-    };
+  public async updateExpense(id: string, expense: ExpenseUpdatePayload): Promise<Expense> {
+    const response = await this.request(`/api/expenses/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(expense),
+    });
+    return this.mapBackendExpense(response);
   }
 
-  public async getExpenseAnalytics(): Promise<any> {
+  public async getExpenseDashboardStats(): Promise<ExpenseDashboardStats> {
+    return await this.request('/api/expenses/stats/dashboard/');
+  }
+
+  public async getExpenseAnalytics(): Promise<ExpenseAnalytics> {
     return await this.request('/api/expenses/stats/analytics/');
   }
 
   // --- COMBINED SUMMARY ENDPOINT ---
-  public async getCombinedDashboardSummary(): Promise<any> {
-    const response = await this.request('/api/dashboard/summary/');
-    const habitStats = response.habit_stats ?? response.habits;
-    const expenseStats = this.normalizeExpenseStats(
-      response.expense_stats ?? response.expenses
-    );
-    return {
-      habit_stats: habitStats,
-      expense_stats: expenseStats,
-      habits: habitStats,
-      expenses: expenseStats,
-    };
-  }
-
-  private normalizeExpenseStats(response: any): any {
-    if (!response) return {};
-    return {
-      ...response,
-      last_7_days: response.last_7_days || response.last_7_days_spending || [],
-      month_change:
-        typeof response.month_change === 'object'
-          ? response.month_change?.percentage_change ?? 0
-          : response.month_change ?? 0,
-      top_category_this_month:
-        typeof response.top_category_this_month === 'object'
-          ? response.top_category_this_month?.category || 'None'
-          : response.top_category_this_month || 'None',
-      monthly_spending_history: response.monthly_spending_history || [],
-    };
+  public async getCombinedDashboardSummary(): Promise<CombinedDashboardSummary> {
+    return await this.request('/api/dashboard/summary/');
   }
 
   // --- MODEL MAPPER HELPERS ---
-  private mapBackendHabit(b: any): Habit {
+  private mapBackendHabit(value: unknown): Habit {
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('id' in value) ||
+      !('name' in value) ||
+      !('frequency' in value) ||
+      !('target_value' in value) ||
+      !('target_unit' in value) ||
+      !('start_date' in value) ||
+      !('is_active' in value)
+    ) {
+      throw new Error('Habit endpoint returned an unexpected record.');
+    }
+    const b = value as Record<string, unknown>;
+    if (
+      typeof b.name !== 'string' ||
+      b.frequency !== 'DAILY' ||
+      typeof b.target_value !== 'number' ||
+      !['MINUTES', 'COUNT', 'BOOL'].includes(String(b.target_unit)) ||
+      typeof b.start_date !== 'string' ||
+      typeof b.is_active !== 'boolean'
+    ) {
+      throw new Error('Habit endpoint returned fields that do not match the supported habit schema.');
+    }
     return {
       id: String(b.id),
       name: b.name,
-      category: this.mapCategory(b.category) as HabitCategory,
-      streak: 0, // Calculated dynamically by the streak endpoint
-      history7d: [false, false, false, false, false, false, false],
-      completionRate: 0,
       isCompletedToday: false,
-      history: {},
-      createdDate: b.start_date || b.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+      createdDate: b.start_date,
+      frequency: 'DAILY',
       targetValue: b.target_value,
-      targetUnit: b.target_unit,
+      targetUnit: b.target_unit as Habit['targetUnit'],
+      isActive: b.is_active,
     };
   }
 
-  private mapBackendExpense(b: any): Expense {
+  private mapBackendExpense(value: unknown): Expense {
+    if (!value || typeof value !== 'object' || !('id' in value) || !('amount' in value) || !('date' in value) || !('category' in value)) {
+      throw new Error('Expense endpoint returned an unexpected record.');
+    }
+    const b = value as Record<string, unknown>;
+    const amount = Number(b.amount);
+    if (!Number.isFinite(amount) || typeof b.date !== 'string' || typeof b.category !== 'string') {
+      throw new Error('Expense endpoint returned fields that do not match the supported expense schema.');
+    }
     return {
       id: String(b.id),
-      amount: parseFloat(b.amount),
-      category: b.category as ExpenseCategory,
+      amount,
+      category: b.category,
       date: b.date,
-      merchant: b.merchant || '',
-      note: b.note || '',
-      created_at: b.created_at,
-      updated_at: b.updated_at,
+      merchant: typeof b.merchant === 'string' ? b.merchant : '',
+      note: typeof b.note === 'string' ? b.note : '',
+      created_at: typeof b.created_at === 'string' ? b.created_at : undefined,
+      updated_at: typeof b.updated_at === 'string' ? b.updated_at : undefined,
     };
-  }
-
-  private mapCategory(cat?: string): string {
-    if (!cat) return 'Health';
-  
-    const map: Record<string, string> = {
-      HEALTH: 'Health',
-      PRODUCTIVITY: 'Productivity',
-      FINANCE: 'Finance',
-      EDUCATION: 'Education',
-    };
-  
-    return map[cat.toUpperCase()] || 'Health';
   }
 }
 

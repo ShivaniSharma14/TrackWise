@@ -1,160 +1,3 @@
-// import React, { useState } from 'react';
-// import { CreditCard, Calendar, Landmark, Notebook, Tag } from 'lucide-react';
-// import { ExpenseCategory, Expense, EXPENSE_CATEGORIES } from '../types';
-// import { PageHeader, Panel } from './ui';
-
-// interface AddExpenseViewProps {
-//   onSaveExpense: (expense: Omit<Expense, 'id'>) => void;
-//   onSuccessNavigate: () => void;
-// }
-
-// export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: AddExpenseViewProps) {
-//   const [amount, setAmount] = useState('');
-//   const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Food');
-//   const [date, setDate] = useState('2026-05-20');
-//   const [account, setAccount] = useState('Primary Bank (....4210)');
-//   const [transaction, setTransaction] = useState('');
-//   const [note, setNote] = useState('');
-
-//   const handleExpenseSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!amount || parseFloat(amount) <= 0) {
-//       alert('Please enter a valid amount');
-//       return;
-//     }
-//     onSaveExpense({
-//       amount: parseFloat(amount),
-//       category: expenseCategory,
-//       date,
-//       merchant: transaction.trim() || `${expenseCategory} Purchase`,
-      
-//       note: note.trim(),
-//     });
-//     setAmount('');
-//     setTransaction('');
-//     setNote('');
-//     alert('Expense recorded successfully!');
-//     onSuccessNavigate();
-//   };
-
-//   const categoryIcons: Record<ExpenseCategory, string> = {
-//     Food: '🍲',
-//     Transport: '🚗',
-//     Entertainment: '🎬',
-//     Shopping: '🛍️',
-//     Utilities: '🧾',
-//     Health: '❤️',
-//     Other: '📦',
-//   };
-
-//   return (
-//     <div className="max-w-xl mx-auto space-y-6">
-//       <PageHeader title="Log expense" subtitle="Add a transaction to your ledger." />
-
-//       <Panel padding="md">
-//         <form onSubmit={handleExpenseSubmit} className="space-y-5">
-//           <div className="space-y-1.5">
-//             <label className="label flex items-center gap-1.5">
-//               <CreditCard size={14} />
-//               Amount
-//             </label>
-//             <div className="relative">
-//               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-medium">$</span>
-//               <input
-//                 type="number"
-//                 step="0.01"
-//                 required
-//                 placeholder="0.00"
-//                 value={amount}
-//                 onChange={(e) => setAmount(e.target.value)}
-//                 className="input-field pl-8 text-xl font-semibold py-3"
-//               />
-//             </div>
-//           </div>
-
-//           <div className="space-y-1.5">
-//             <label className="label flex items-center gap-1.5">
-//               <Tag size={14} />
-//               Category
-//             </label>
-//             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-//               {EXPENSE_CATEGORIES.map((name) => {
-//                 const isActive = expenseCategory === name;
-//                 return (
-//                   <button
-//                     key={name}
-//                     type="button"
-//                     onClick={() => setExpenseCategory(name)}
-//                     className={`flex flex-col items-center gap-1.5 p-3 rounded-md transition-colors cursor-pointer ${
-//                       isActive ? 'bg-primary/12 ring-1 ring-primary/30' : 'bg-surface-container-high hover:bg-surface-container-highest'
-//                     }`}
-//                   >
-//                     <span className="text-lg">{categoryIcons[name]}</span>
-//                     <span className="text-xs font-medium text-text-primary">{name}</span>
-//                   </button>
-//                 );
-//               })}
-//             </div>
-//           </div>
-
-//           <div className="space-y-1.5">
-//             <label className="label">Merchant</label>
-//             <input
-//               type="text"
-//               required
-//               placeholder="e.g. Whole Foods, Uber"
-//               value={transaction}
-//               onChange={(e) => setTransaction(e.target.value)}
-//               className="input-field"
-//             />
-//           </div>
-
-//           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-//             <div className="space-y-1.5">
-//               <label className="label flex items-center gap-1.5">
-//                 <Calendar size={14} />
-//                 Date
-//               </label>
-//               <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="input-field color-scheme-dark" />
-//             </div>
-//             <div className="space-y-1.5">
-//               <label className="label flex items-center gap-1.5">
-//                 <Landmark size={14} />
-//                 Account
-//               </label>
-//               <select value={account} onChange={(e) => setAccount(e.target.value)} className="input-field dropdown-dark">
-//                 <option value="Primary Bank (....4210)">Primary Bank (....4210)</option>
-//                 <option value="Savings A/C (....9902)">Savings A/C (....9902)</option>
-//                 <option value="Digital Wallet">Digital Wallet</option>
-//               </select>
-//             </div>
-//           </div>
-
-//           <div className="space-y-1.5">
-//             <label className="label flex items-center gap-1.5">
-//               <Notebook size={14} />
-//               Note (optional)
-//             </label>
-//             <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} className="input-field resize-none" placeholder="Add a note…" />
-//           </div>
-
-//           <div className="flex gap-3 pt-2 divider">
-//             <button type="button" onClick={onSuccessNavigate} className="flex-1 btn-secondary">
-//               Cancel
-//             </button>
-//             <button type="submit" className="flex-[2] btn-primary">
-//               Save expense
-//             </button>
-//           </div>
-//         </form>
-//       </Panel>
-//     </div>
-//   );
-// }
-
-
-
-
 import React, { useState } from 'react';
 import { CreditCard, Calendar, Notebook, Tag, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { ExpenseCategory, ExpenseCreatePayload, EXPENSE_CATEGORIES } from '../types';
@@ -195,11 +38,11 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
   const validateAmount = (value: string): boolean => {
     const parsed = parseFloat(value);
     if (!value || isNaN(parsed) || parsed <= 0) {
-      setAmountError('Enter an amount greater than $0.00');
+      setAmountError('Enter an amount greater than ₹0.00');
       return false;
     }
     if (parsed > 999999.99) {
-      setAmountError('Amount exceeds maximum ($999,999.99)');
+      setAmountError('Amount exceeds maximum (₹999,999.99)');
       return false;
     }
     setAmountError('');
@@ -245,14 +88,14 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
   const isSuccess = submitState === 'success';
  
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="app-page mx-auto w-full max-w-4xl">
       <PageHeader
         title="Log expense"
         subtitle="Add a transaction to your ledger."
       />
  
-      <Panel padding="md">
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <Panel padding="lg">
+        <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 gap-5 md:grid-cols-2">
  
           {/* Amount */}
           <div className="space-y-1.5">
@@ -262,7 +105,7 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-medium select-none">
-                $
+                ₹
               </span>
               <input
                 type="number"
@@ -299,7 +142,7 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
               <Tag size={14} aria-hidden />
               Category
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {EXPENSE_CATEGORIES.map((name) => {
                 const isActive = category === name;
                 return (
@@ -308,10 +151,10 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
                     type="button"
                     onClick={() => setCategory(name)}
                     disabled={isLoading || isSuccess}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-md transition-colors cursor-pointer ${
+                    className={`flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-xl border p-3 transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-primary/12 ring-1 ring-primary/30'
-                        : 'bg-surface-container-high hover:bg-surface-container-highest'
+                        ? 'border-primary/30 bg-primary/10 text-primary shadow-[0_6px_18px_rgba(115,89,190,0.12)]'
+                        : 'border-border-subtle bg-surface-container-low hover:border-outline hover:bg-surface-container-high'
                     }`}
                     aria-pressed={isActive}
                   >
@@ -328,7 +171,7 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
           </div>
  
           {/* Merchant */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 md:col-span-2">
             <label htmlFor="merchant" className="label">
               Merchant
             </label>
@@ -385,7 +228,7 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
  
           {/* API error banner */}
           {submitState === 'error' && errorMessage && (
-            <div className="flex items-start gap-2 rounded-md bg-red-500/10 border border-red-500/20 px-3 py-2.5 text-sm text-red-400">
+            <div className="flex items-start gap-2 rounded-xl border border-error/20 bg-error/10 px-3 py-2.5 text-sm text-error md:col-span-2">
               <AlertCircle size={15} className="mt-0.5 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -393,14 +236,14 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
  
           {/* Success banner */}
           {isSuccess && (
-            <div className="flex items-center gap-2 rounded-md bg-green-500/10 border border-green-500/20 px-3 py-2.5 text-sm text-green-400">
+            <div className="flex items-center gap-2 rounded-xl border border-success/20 bg-success/10 px-3 py-2.5 text-sm text-success md:col-span-2">
               <CheckCircle size={15} className="shrink-0" />
               <span>Expense saved — redirecting…</span>
             </div>
           )}
  
           {/* Actions */}
-          <div className="flex gap-3 pt-2 border-t border-border-subtle">
+          <div className="flex gap-3 border-t border-border-subtle pt-5 md:col-span-2">
             <button
               type="button"
               onClick={handleCancel}
@@ -412,7 +255,7 @@ export default function AddExpenseView({ onSaveExpense, onSuccessNavigate }: Add
             <button
               type="submit"
               disabled={isLoading || isSuccess}
-              className="flex-2] btn-primary flex items-center justify-center gap-2"
+              className="flex-[2] btn-primary flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

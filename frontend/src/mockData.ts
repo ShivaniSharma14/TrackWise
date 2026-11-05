@@ -1,4 +1,10 @@
 import { Habit, Expense } from './types';
+type LegacyMockHabit = Omit<Habit, 'frequency' | 'targetValue' | 'targetUnit' | 'isActive'> & {
+  category: string;
+  history7d: boolean[];
+  completionRate: number;
+  streak: number;
+};
 
 // Helper to get formatted dates relative to 2026-05-20
 export function getDateString(offsetDays: number): string {
@@ -7,7 +13,7 @@ export function getDateString(offsetDays: number): string {
   return date.toISOString().split('T')[0];
 }
 
-export const DEFAULT_HABITS: Habit[] = [
+export const DEFAULT_HABITS: LegacyMockHabit[] = [
   {
     id: 'h1',
     name: 'Morning Meditation',
